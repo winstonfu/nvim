@@ -9,6 +9,7 @@
 return {
     -- NOTE: Yes, you can install new plugins here!
     'mfussenegger/nvim-dap',
+    lazy = true,
     -- NOTE: And you can specify dependencies as well
     dependencies = {
         -- Creates a beautiful debugger UI
@@ -69,13 +70,40 @@ return {
             end,
             desc = 'Debug: Set Breakpoint',
         },
+        {
+            '<leader>bC',
+            function()
+                require('dap').run_to_cursor()
+            end,
+            desc = 'Debug: Run to Cursor',
+        },
         -- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
         {
-            '<leader>bl',
+            '<leader>bt',
             function()
                 require('dapui').toggle()
             end,
-            desc = 'Debug: See last session result.',
+            desc = 'Debug: Toggle debugging UI.',
+        },
+        {
+            '<leader>tb',
+            function()
+                require('dapui').toggle()
+            end,
+            desc = '[T]oggle [D]ebug UI',
+        },
+        {
+            '<leader>b<leader>',
+            function()
+                require('which-key').show { keys = '<leader>b', loop = true }
+            end,
+            desc = 'Debug: Hydra',
+        },
+        {
+            '<M-e>',
+            function()
+                require('dapui').eval()
+            end,
         },
     },
     config = function()
@@ -95,7 +123,7 @@ return {
             -- online, please don't ask me how to install them :)
             ensure_installed = {
                 -- Update this to ensure that you have the debuggers for the langs you want
-                'debugpy',
+                'python',
             },
         }
 
@@ -134,8 +162,10 @@ return {
         end
 
         dap.listeners.after.event_initialized['dapui_config'] = dapui.open
-        dap.listeners.before.event_terminated['dapui_config'] = dapui.close
-        dap.listeners.before.event_exited['dapui_config'] = dapui.close
+        -- dap.listeners.before.event_terminated['dapui_config'] = dapui.close
+        -- dap.listeners.before.event_exited['dapui_config'] = dapui.close
+
+        -- dap.set_exception_breakpoints { 'uncaught', 'raised' }
 
         -- Install golang specific config
         require('dap-go').setup {
@@ -150,13 +180,22 @@ return {
         -- require('dap-python').resolve_python = function()
         --     return vim.fn.expand '~' .. '/miniconda3/'
         -- end
-        table.insert(dap.configurations.python, {
+        table.insert(dap.configurations.python, 1, {
             type = 'python',
             request = 'launch',
             name = 'Miniconda (Python): Launch file',
             program = '${file}',
             python = function()
                 return vim.fn.expand '~' .. '/miniconda3/python'
+            end,
+        })
+        table.insert(dap.configurations.python, 2, {
+            type = 'python',
+            request = 'launch',
+            name = 'Automatic (Python): Launch file',
+            program = '${file}',
+            pythonPath = function()
+                return require('venv-selector').get_active_path()
             end,
         })
     end,

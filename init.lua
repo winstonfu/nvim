@@ -73,7 +73,7 @@ vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
-vim.opt.inccommand = 'split'
+vim.opt.inccommand = 'nosplit'
 
 -- Show which line your cursor is on
 vim.opt.cursorline = true
@@ -120,7 +120,7 @@ vim.opt.autochdir = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
-vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
+vim.keymap.set('n', '<leader>qd', vim.diagnostic.setloclist, { desc = 'Open [Q]uickfix [D]iagnostic list' })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -149,7 +149,8 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 vim.keymap.set('i', '<C-k>', vim.lsp.buf.signature_help, { desc = 'Signature Help' })
 
 -- Insert new line
-vim.keymap.set('n', '<CR>', 'o<esc>', { desc = 'Insert new line without exiting normal mode' })
+-- vim.keymap.set('n', '<CR>', 'o<esc>', { desc = 'Insert new line without exiting normal mode' })
+-- vim.keymap.set('n', '<S-CR>', 'O<esc>', { desc = 'Insert new line above without exiting normal mode' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -184,12 +185,26 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
     end,
 })
 
--- Allow :wqa with terminal buffers open
-vim.api.nvim_create_autocmd('TermOpen', {
-    pattern = '*',
+-- -- Allow :wqa with terminal buffers open
+-- vim.api.nvim_create_autocmd('TermOpen', {
+--     pattern = '*',
+--     callback = function()
+--         vim.opt_local.number = false
+--         vim.opt_local.relativenumber = false
+--     end,
+-- })
+
+-- Folds
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileReadPost' }, {
     callback = function()
-        vim.opt_local.number = false
-        vim.opt_local.relativenumber = false
+        vim.defer_fn(function()
+            vim.opt.foldmethod = 'expr'
+            vim.opt.foldexpr = 'nvim_treesitter#foldexpr()'
+            vim.opt.foldlevel = 99 -- allow all folds to remain open
+            vim.opt.foldlevelstart = 99 -- applies at startup
+            vim.opt.foldenable = true
+            vim.cmd 'normal! zx' -- now zx will NOT close everything
+        end, 0)
     end,
 })
 
@@ -324,6 +339,8 @@ require('lazy').setup({
                 { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
                 { '<leader>l', group = '[L]aTeX', mode = { 'n' } },
                 { '<leader>o', group = '[O]bsidian', mode = { 'n' } },
+                { '<leader>b', group = 'De[b]ug', mode = { 'n' } },
+                { '<leader>x', group = 'Diagnostics (Trouble)', mode = { 'n' } },
             },
         },
         keys = {
@@ -417,6 +434,28 @@ require('lazy').setup({
                             -- ['<c-b>'] = 'select_vertical',
                             ['<c-h>'] = 'which_key',
                         },
+                    },
+                    preview = {
+                        filesize_limit = 1,
+                        timeout_ms = 100,
+                        -- 1) Do not show previewer for certain files
+                        filetype_hook = function(filepath, bufnr, opts)
+                            -- you could analogously check opts.ft for filetypes
+                            local putils = require 'telescope.previewers.utils'
+                            local excluded = vim.tbl_filter(function(ending)
+                                return filepath:match(ending)
+                            end, {
+                                '.*%.csv',
+                                '.*%.json',
+                                '.*%.pkl',
+                                '.*%.parquet',
+                            })
+                            if not vim.tbl_isempty(excluded) then
+                                putils.set_preview_message(bufnr, opts.winid, string.format("I don't like %s files!", excluded[1]:sub(5, -1)))
+                                return false
+                            end
+                            return true
+                        end,
                     },
                     path_display = { 'truncate' },
                 },
@@ -998,6 +1037,7 @@ require('lazy').setup({
             --  - ci'  - [C]hange [I]nside [']quote
             local spec_treesitter = require('mini.ai').gen_spec.treesitter
             local spec_pair = require('mini.ai').gen_spec.pair
+            local gen_spec = require('mini.ai').gen_spec
             require('mini.ai').setup {
                 n_lines = 500,
                 custom_textobjects = {
@@ -1007,8 +1047,39 @@ require('lazy').setup({
                         a = { '@conditional.outer', '@loop.outer' },
                         i = { '@conditional.inner', '@loop.inner' },
                     },
+                    h = spec_treesitter { a = '@class.outer', i = '@class.inner' },
+                    g = gen_spec.function_call(),
                 },
             }
+
+            local map_mini_ai_move = function(key, textobject_id, text_object_desc)
+                vim.keymap.set({ 'n', 'x' }, ']' .. string.lower(key), function()
+                    for i = 1, vim.v.count1 do
+                        require('mini.ai').move_cursor('left', 'a', textobject_id)
+                    end
+                end, { desc = 'Next ' .. text_object_desc .. ' Start' })
+                vim.keymap.set({ 'n', 'x' }, '[' .. string.lower(key), function()
+                    for i = 1, vim.v.count1 do
+                        require('mini.ai').move_cursor('left', 'a', textobject_id, { search_method = 'cover_or_prev' })
+                    end
+                end, { desc = 'Prev' .. text_object_desc .. ' Start' })
+                vim.keymap.set({ 'n', 'x' }, ']' .. string.upper(key), function()
+                    for i = 1, vim.v.count1 do
+                        require('mini.ai').move_cursor('right', 'a', textobject_id)
+                    end
+                end, { desc = 'Next ' .. text_object_desc .. ' End' })
+                vim.keymap.set({ 'n', 'x' }, '[' .. string.upper(key), function()
+                    for i = 1, vim.v.count1 do
+                        require('mini.ai').move_cursor('right', 'a', textobject_id, { search_method = 'cover_or_prev' })
+                    end
+                end, { desc = 'Prev ' .. text_object_desc .. ' End' })
+            end
+
+            map_mini_ai_move('g', 'g', 'Function Call')
+            map_mini_ai_move('f', 'f', 'Function Def')
+            map_mini_ai_move('a', 'a', 'Argument')
+            map_mini_ai_move('h', 'h', 'Class')
+            map_mini_ai_move('o', 'o', 'Conditional / Loop')
 
             -- Add/delete/replace surroundings (brackets, quotes, etc.)
             --
@@ -1043,7 +1114,14 @@ require('lazy').setup({
             require('mini.bracketed').setup {
                 treesitter = { suffix = '' },
                 file = { suffix = '' },
+                buffer = { suffix = '' },
             }
+            vim.keymap.set('n', 'gb', function()
+                require('mini.bracketed').buffer 'forward'
+            end, { desc = 'Go to next buffer' })
+            vim.keymap.set('n', 'gB', function()
+                require('mini.bracketed').buffer 'backward'
+            end, { desc = 'Go to next buffer' })
 
             -- File editing
             require('mini.files').setup()
@@ -1051,6 +1129,8 @@ require('lazy').setup({
                 MiniFiles.open()
             end, { desc = 'Open MiniFiles editor.' })
 
+            -- require('mini.misc').setup()
+            -- require('mini.misc').setup_auto_root()
             -- Autopair
             require('mini.pairs').setup()
             -- Create symmetrical `$$` pair only in Tex files
@@ -1060,7 +1140,7 @@ require('lazy').setup({
             vim.api.nvim_create_autocmd('FileType', { pattern = { 'tex', 'markdown' }, callback = map_tex })
 
             -- Multiline 'f' jump
-            require('mini.jump').setup()
+            -- require('mini.jump').setup()
 
             -- Splitjoin
             require('mini.splitjoin').setup()
@@ -1103,90 +1183,7 @@ require('lazy').setup({
                     disable = { 'latex' },
                 },
                 indent = { enable = true, disable = { 'ruby' } },
-                textobjects = {
-                    -- select = {
-                    --     enable = true,
-                    --
-                    --     -- Automatically jump forward to textobj, similar to targets.vim
-                    --     lookahead = true,
-                    --
-                    --     keymaps = {
-                    --         -- You can use the capture groups defined in textobjects.scm
-                    --         ['af'] = '@function.outer',
-                    --         ['if'] = '@function.inner',
-                    --         ['ac'] = '@class.outer',
-                    --         -- You can optionally set descriptions to the mappings (used in the desc parameter of
-                    --         -- nvim_buf_set_keymap) which plugins like which-key display
-                    --         ['ic'] = { query = '@class.inner', desc = 'Select inner part of a class region' },
-                    --         -- You can also use captures from other query groups like `locals.scm`
-                    --         ['as'] = { query = '@local.scope', query_group = 'locals', desc = 'Select language scope' },
-                    --     },
-                    --     -- You can choose the select mode (default is charwise 'v')
-                    --     --
-                    --     -- Can also be a function which gets passed a table with the keys
-                    --     -- * query_string: eg '@function.inner'
-                    --     -- * method: eg 'v' or 'o'
-                    --     -- and should return the mode ('v', 'V', or '<c-v>') or a table
-                    --     -- mapping query_strings to modes.
-                    --     selection_modes = {
-                    --         ['@parameter.outer'] = 'v', -- charwise
-                    --         ['@function.outer'] = 'V', -- linewise
-                    --         ['@class.outer'] = '<c-v>', -- blockwise
-                    --     },
-                    --     -- If you set this to `true` (default is `false`) then any textobject is
-                    --     -- extended to include preceding or succeeding whitespace. Succeeding
-                    --     -- whitespace has priority in order to act similarly to eg the built-in
-                    --     -- `ap`.
-                    --     --
-                    --     -- Can also be a function which gets passed a table with the keys
-                    --     -- * query_string: eg '@function.inner'
-                    --     -- * selection_mode: eg 'v'
-                    --     -- and should return true or false
-                    --     include_surrounding_whitespace = true,
-                    -- },
-                    move = {
-                        enable = true,
-                        set_jumps = true, -- whether to set jumps in the jumplist
-                        goto_next_start = {
-                            [']f'] = '@function.outer',
-                            -- ["]]"] = { query = "@class.outer", desc = "Next class start" },
-                            --
-                            -- You can use regex matching (i.e. lua pattern) and/or pass a list in a "query" key to group multiple queries.
-                            [']o'] = '@loop.*',
-                            -- ["]o"] = { query = { "@loop.inner", "@loop.outer" } }
-                            --
-                            -- You can pass a query group to use query from `queries/<lang>/<query_group>.scm file in your runtime path.
-                            -- Below example nvim-treesitter's `locals.scm` and `folds.scm`. They also provide highlights.scm and indent.scm.
-                            [']s'] = { query = '@local.scope', query_group = 'locals', desc = 'Next scope' },
-                            [']z'] = { query = '@fold', query_group = 'folds', desc = 'Next fold' },
-                        },
-                        goto_next_end = {
-                            [']F'] = '@function.outer',
-                            -- ["]["] = "@class.outer",
-                        },
-                        goto_previous_start = {
-                            ['[f'] = '@function.outer',
-                            -- ["[["] = "@class.outer",
-                        },
-                        goto_previous_end = {
-                            ['[F'] = '@function.outer',
-                            -- ["[]"] = "@class.outer",
-                        },
-                        -- Below will go to either the start or the end, whichever is closer.
-                        -- Use if you want more granular movements
-                        -- Make it even more gradual by adding multiple queries and regex.
-                        goto_next = {
-                            [']o'] = '@conditional.outer',
-                        },
-                        goto_previous = {
-                            ['[o'] = '@conditional.outer',
-                        },
-                    },
-                },
             }
-            vim.o.foldmethod = 'expr'
-            vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
-            vim.o.foldenable = false
         end,
     },
     -- There are additional nvim-treesitter modules that you can use to interact

@@ -22,7 +22,7 @@ return {
                 -- anaconda_envs_path = vim.fn.expand '~' .. '/miniconda3/envs',
             }
             -- Function to reconfigure dap-python based on selected venv
-            vim.keymap.set('n', '<leader>dv', ':VenvSelect<cr>', { noremap = true, nowait = true, desc = 'Set [D]ocument [V]env' })
+            vim.keymap.set('n', '<leader>dv', '<cmd>VenvSelect<cr>', { noremap = true, nowait = true, silent = true, desc = 'Set [D]ocument [V]env' })
         end,
     },
     {
@@ -38,7 +38,20 @@ return {
     },
     {
         'stevearc/overseer.nvim',
-        opts = {},
+        opts = {
+            task_list = {
+                bindings = {
+                    ['<M-l>'] = 'IncreaseDetail',
+                    ['<M-h>'] = 'DecreaseDetail',
+                    ['<M-k>'] = 'ScrollOutputUp',
+                    ['<M-j>'] = 'ScrollOutputDown',
+                    ['<C-l>'] = false,
+                    ['<C-h>'] = false,
+                    ['<C-k>'] = false,
+                    ['<C-j>'] = false,
+                },
+            },
+        },
     },
     {
         'epwalsh/obsidian.nvim',
@@ -109,13 +122,6 @@ return {
                 }
             end,
         },
-        {
-            'stevearc/quicker.nvim',
-            event = 'FileType qf',
-            ---@module "quicker"
-            ---@type quicker.SetupOptions
-            opts = {},
-        },
     },
     {
         'Bekaboo/dropbar.nvim',
@@ -151,6 +157,7 @@ return {
             }
             vim.keymap.set('n', '<leader>ww', '<cmd>SessionSave<CR>', { desc = 'Save session for auto session root dir' })
             vim.keymap.set('n', '<leader>wr', '<cmd>SessionRestore<CR>', { desc = 'Restore session for cwd' })
+            vim.keymap.set('n', '<leader>wv', '<cmd>SessionSearch<CR>', { desc = 'View saved sessions' })
         end,
     },
     {
@@ -167,7 +174,7 @@ return {
                 next_key = '<C-N>',
                 previous_key = '<C-P>',
                 accept_key = '<C-Y>',
-                reject_key = '<esc>',
+                reject_key = '',
             }
             wilder.set_option('pipeline', {
                 wilder.branch(
@@ -208,150 +215,6 @@ return {
     {
         'nvim-treesitter/nvim-treesitter-textobjects',
         dependencies = 'nvim-treesitter',
-    },
-    {
-        'folke/snacks.nvim',
-        priority = 1000,
-        lazy = false,
-        ---@type snacks.Config
-        opts = {
-            -- your configuration comes here
-            -- or leave it empty to use the default settings
-            -- refer to the configuration section below
-            bigfile = { enabled = false },
-            dashboard = { enabled = false },
-            explorer = { enabled = false },
-            indent = { enabled = false },
-            input = { enabled = true },
-            picker = { enabled = false },
-            notifier = {
-                enabled = true,
-                timeout = 3000, -- default timeout in ms
-                width = { min = 40, max = 0.4 },
-                height = { min = 1, max = 0.6 },
-                -- editor margin to keep free. tabline and statusline are taken into account automatically
-                margin = { top = 0, right = 1, bottom = 0 },
-                padding = true, -- add 1 cell of left/right padding to the notification window
-                sort = { 'level', 'added' }, -- sort by level and time
-                -- minimum log level to display. TRACE is the lowest
-                -- all notifications are stored in history
-                level = vim.log.levels.TRACE,
-                icons = {
-                    error = ' ',
-                    warn = ' ',
-                    info = ' ',
-                    debug = ' ',
-                    trace = ' ',
-                },
-                keep = function(notif)
-                    return vim.fn.getcmdpos() > 0
-                end,
-                ---@type snacks.notifier.style
-                style = 'compact',
-                top_down = true, -- place notifications from top to bottom
-                date_format = '%R', -- time format for notifications
-                -- format for footer when more lines are available
-                -- `%d` is replaced with the number of lines.
-                -- only works for styles with a border
-                ---@type string|boolean
-                more_format = ' ↓ %d lines ',
-                refresh = 50, -- refresh at most every 50ms
-            },
-            notify = { enabled = true },
-            quickfile = { enabled = true },
-            scope = { enabled = false },
-            scroll = { enabled = false },
-            statuscolumn = { enabled = false },
-            words = { enabled = false },
-            terminal = {
-                enable = true,
-                win = { position = 'float' },
-            },
-            styles = {
-                terminal = {
-                    bo = {
-                        filetype = 'snacks_terminal',
-                    },
-                    wo = {},
-                    keys = {
-                        q = 'hide',
-                        gf = function(self)
-                            local f = vim.fn.findfile(vim.fn.expand '<cfile>', '**')
-                            if f == '' then
-                                Snacks.notify.warn 'No file under cursor'
-                            else
-                                self:hide()
-                                vim.schedule(function()
-                                    vim.cmd('e ' .. f)
-                                end)
-                            end
-                        end,
-                        term_normal = {
-                            '<esc>',
-                            function(self)
-                                self.esc_timer = self.esc_timer or (vim.uv or vim.loop).new_timer()
-                                if self.esc_timer:is_active() then
-                                    self.esc_timer:stop()
-                                    vim.cmd 'stopinsert'
-                                else
-                                    self.esc_timer:start(200, 0, function() end)
-                                    return '<esc>'
-                                end
-                            end,
-                            mode = 't',
-                            expr = true,
-                            desc = 'Double escape to normal mode',
-                        },
-                    },
-                },
-            },
-        },
-        keys = {
-            {
-                '<c-\\>',
-                function()
-                    Snacks.terminal()
-                end,
-                desc = 'Toggle Terminal',
-            },
-        },
-    },
-    {
-        'folke/trouble.nvim',
-        opts = {}, -- for default options, refer to the configuration section for custom setup.
-        cmd = 'Trouble',
-        keys = {
-            {
-                '<leader>xx',
-                '<cmd>Trouble diagnostics toggle<cr>',
-                desc = 'Diagnostics (Trouble)',
-            },
-            {
-                '<leader>xX',
-                '<cmd>Trouble diagnostics toggle filter.buf=0<cr>',
-                desc = 'Buffer Diagnostics (Trouble)',
-            },
-            {
-                '<leader>cs',
-                '<cmd>Trouble symbols toggle focus=false<cr>',
-                desc = 'Symbols (Trouble)',
-            },
-            {
-                '<leader>cl',
-                '<cmd>Trouble lsp toggle focus=false win.position=right<cr>',
-                desc = 'LSP Definitions / references / ... (Trouble)',
-            },
-            {
-                '<leader>xL',
-                '<cmd>Trouble loclist toggle<cr>',
-                desc = 'Location List (Trouble)',
-            },
-            {
-                '<leader>xQ',
-                '<cmd>Trouble qflist toggle<cr>',
-                desc = 'Quickfix List (Trouble)',
-            },
-        },
     },
     -- {
     --     'ghostbuster91/nvim-next',
