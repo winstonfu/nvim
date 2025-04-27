@@ -152,6 +152,22 @@ vim.keymap.set('i', '<C-k>', vim.lsp.buf.signature_help, { desc = 'Signature Hel
 -- vim.keymap.set('n', '<CR>', 'o<esc>', { desc = 'Insert new line without exiting normal mode' })
 -- vim.keymap.set('n', '<S-CR>', 'O<esc>', { desc = 'Insert new line above without exiting normal mode' })
 
+-- Delete first and last line of selection
+vim.keymap.set('x', '<leader>d', function()
+    local k = vim.v.count1 -- (1) get the count, defaults to 1  :contentReference[oaicite:0]{index=0}
+
+    -- leave Visual so that '< and '> are written
+    vim.api.nvim_feedkeys(
+        vim.api.nvim_replace_termcodes('<Esc>', true, false, true), -- translate <Esc>
+        'x', -- 'x' ⇒ execute immediately, do remap              :contentReference[oaicite:1]{index=1}
+        false
+    )
+
+    -- build the Ex command that encodes (2)
+    local cmd = string.format("'>-%d,'>d | '<,'<+%dd", k - 1, k - 1)
+    vim.cmd(cmd)
+end, { silent = true, desc = 'Delete first and last ' .. vim.v.count1 .. ' line(s) of selection' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -1139,14 +1155,25 @@ require('lazy').setup({
             end
             vim.api.nvim_create_autocmd('FileType', { pattern = { 'tex', 'markdown' }, callback = map_tex })
 
-            -- Multiline 'f' jump
-            -- require('mini.jump').setup()
-
             -- Splitjoin
             require('mini.splitjoin').setup()
 
             -- Move text
             require('mini.move').setup()
+
+            -- Sessions
+            require('mini.sessions').setup()
+            vim.keymap.set('n', '<leader>ww', function()
+                vim.ui.input({ prompt = 'Session Name' }, function(input)
+                    MiniSessions.write(input)
+                end)
+            end, { desc = 'Save session for auto session root dir' })
+            vim.keymap.set('n', '<leader>wr', function()
+                MiniSessions.select()
+            end, { desc = 'Restore Session' })
+            vim.keymap.set('n', '<leader>wd', function()
+                MiniSessions.select 'delete'
+            end, { desc = 'Delete Session' })
         end,
     },
     { -- Highlight, edit, and navigate code

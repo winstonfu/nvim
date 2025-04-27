@@ -73,4 +73,16 @@ return {
             { i(1, 'logs.log') }
         )
     ),
+
+    s(
+        { trig = 'docstr', name = 'Docstring' },
+        fmta(
+            [[
+            '''
+            <>
+            '''
+    ]],
+            { i(1) }
+        )
+    ),
 }

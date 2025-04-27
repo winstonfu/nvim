@@ -78,6 +78,25 @@ return {
                         path = '~/OneDrive - University of Cambridge/Documents/Obsidian/Happy Fun Land/',
                     },
                 },
+                mappings = {
+                    ['<c-cr>'] = {
+                        action = function()
+                            return require('obsidian').util.smart_action()
+                        end,
+                        opts = { buffer = true, expr = true },
+                    },
+                    ['<leader>oc'] = {
+                        action = function()
+                            return require('obsidian').util.toggle_checkbox()
+                        end,
+                        opts = { buffer = true },
+                    },
+                    -- ['<leader>ch'] = false,
+                },
+                daily_notes = {
+                    -- Optional, if you keep daily notes in a separate directory.
+                    folder = '01 Chronos',
+                },
             }
             vim.keymap.set('n', '<leader>sv', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[S]earch Obsidian [V]ault' })
             vim.keymap.set('n', '<leader>os', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[O]bsidian [S]earch Vault' })
@@ -145,22 +164,6 @@ return {
         end,
     },
     {
-        'rmagatti/auto-session',
-        lazy = false,
-        config = function()
-            local auto_session = require 'auto-session'
-            auto_session.setup {
-                auto_restore = true,
-                auto_save = true,
-                suppressed_dirs = { '~/', '~/Dev/', '~/Downloads', '~/Desktop/' },
-                pre_save_cmds = { 'OverseerClose' },
-            }
-            vim.keymap.set('n', '<leader>ww', '<cmd>SessionSave<CR>', { desc = 'Save session for auto session root dir' })
-            vim.keymap.set('n', '<leader>wr', '<cmd>SessionRestore<CR>', { desc = 'Restore session for cwd' })
-            vim.keymap.set('n', '<leader>wv', '<cmd>SessionSearch<CR>', { desc = 'View saved sessions' })
-        end,
-    },
-    {
         'gelguy/wilder.nvim',
         event = 'CmdlineEnter',
         build = ':UpdateRemotePlugins',
@@ -216,74 +219,14 @@ return {
         'nvim-treesitter/nvim-treesitter-textobjects',
         dependencies = 'nvim-treesitter',
     },
-    -- {
-    --     'ghostbuster91/nvim-next',
-    --     config = function()
-    --         require('nvim-next').setup {
-    --             default_mappings = {
-    --                 repeat_style = 'original',
-    --             },
-    --         }
-    --         local next_move = require 'nvim-next.move'
-    --         local MiniAi = require 'mini.ai'
-    --         local user_input = nil
-    --         local move_to_text_obj = function(side)
-    --             local prev_txt_obj, next_txt_obj = next_move.make_repeatable_pair(function()
-    --                 if user_input == nil then
-    --                     user_input = vim.fn.getchar()
-    --                 end
-    --                 MiniAi.move_cursor(side, 'a', user_input, { search_method = 'cover_or_next' })
-    --             end, function()
-    --                 if user_input == nil then
-    --                     user_input = vim.fn.getchar()
-    --                 end
-    --                 MiniAi.move_cursor(side, 'a', user_input, { search_method = 'cover_or_prev' })
-    --             end)
-    --             return { prev_txt_obj, next_txt_obj }
-    --         end
-    --         local left_side = move_to_text_obj 'left'
-    --         vim.keymap.set({ 'n', 'v' }, ']t', left_side[2], { desc = 'Jump to next text object' })
-    --         vim.keymap.set({ 'n', 'v' }, '[t', left_side[1], { desc = 'Jump to previous text object' })
-    --     end,
-    -- },
-    -- {
-    --     'AckslD/nvim-neoclip.lua',
-    --     dependencies = {
-    --         -- you'll need at least one of these
-    --         { 'nvim-telescope/telescope.nvim' },
-    --         -- {'ibhagwan/fzf-lua'},
-    --     },
-    --     config = function()
-    --         require('neoclip').setup {
-    --             default_register = { '"' },
-    --             keys = {
-    --                 telescope = {
-    --                     i = {
-    --                         select = '<cr>',
-    --                         paste = '<c-y>',
-    --                         paste_behind = '<c-k>',
-    --                         replay = '<c-q>', -- replay a macro
-    --                         delete = '<c-d>', -- delete an entry
-    --                         edit = '<c-e>', -- edit an entry
-    --                         custom = {},
-    --                     },
-    --                     n = {
-    --                         select = '<cr>',
-    --                         paste = 'p',
-    --                         --- It is possible to map to more than one key.
-    --                         -- paste = { 'p', '<c-p>' },
-    --                         paste_behind = 'P',
-    --                         replay = 'q',
-    --                         delete = 'd',
-    --                         edit = 'e',
-    --                         custom = {},
-    --                     },
-    --                 },
-    --             },
-    --         }
-    --         vim.keymap.set({ 'n', 'v' }, '<leader>p', '<cmd>Telescope neoclip<CR>')
-    --     end,
-    -- },
+    {
+        'nvim-treesitter/nvim-treesitter-context',
+        dependencies = 'nvim-treesitter',
+        config = function()
+            require('treesitter-context').setup { enable = false }
+            vim.keymap.set('n', '<leader>tc', '<cmd>TSContextToggle<cr>', { desc = '[T]oggle [C]ontext Preview' })
+        end,
+    },
     {
         'otavioschwanck/arrow.nvim',
         dependencies = {
@@ -302,5 +245,16 @@ return {
         opts = {
             fadelevel = 0.8,
         },
+    },
+    {
+        'stevearc/oil.nvim',
+        ---@module 'oil'
+        ---@type oil.SetupOpts
+        opts = {},
+        -- Optional dependencies
+        dependencies = { { 'echasnovski/mini.icons', opts = {} } },
+        -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
+        -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
+        lazy = false,
     },
 }
