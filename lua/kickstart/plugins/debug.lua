@@ -176,19 +176,10 @@ return {
             },
         }
 
-        require('dap-python').setup(vim.fn.stdpath 'data' .. '/mason/packages/debugpy/venv/Scripts/python')
+        require('dap-python').setup(vim.fn.stdpath 'data' .. '/mason/packages/debugpy/venv/bin/python')
         -- require('dap-python').resolve_python = function()
         --     return vim.fn.expand '~' .. '/miniconda3/'
         -- end
-        table.insert(dap.configurations.python, 1, {
-            type = 'python',
-            request = 'launch',
-            name = 'Miniconda (Python): Launch file',
-            program = '${file}',
-            python = function()
-                return vim.fn.expand '~' .. '/miniconda3/python'
-            end,
-        })
         table.insert(dap.configurations.python, 2, {
             type = 'python',
             request = 'launch',
