@@ -53,7 +53,7 @@ return {
                 workspaces = {
                     {
                         name = 'vault',
-                        path = '~/OneDrive - University of Cambridge/Documents/Obsidian/Happy Fun Land/',
+                        path = '~/Documents/Obsidian/Happy Fun Land/',
                     },
                 },
                 mappings = {

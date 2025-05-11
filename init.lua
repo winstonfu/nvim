@@ -805,6 +805,7 @@ require('lazy').setup({
                 'texlab',
                 -- Markdown
                 'marksman',
+                'markdownlint',
                 'prettier',
                 -- Others
                 'tree-sitter-cli',
