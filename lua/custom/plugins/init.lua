@@ -53,7 +53,7 @@ return {
                 workspaces = {
                     {
                         name = 'vault',
-                        path = '~/OneDrive - University of Cambridge/Documents/Obsidian/Happy Fun Land/',
+                        path = '~/Documents/Obsidian/Happy Fun Land/',
                     },
                 },
                 mappings = {
@@ -277,6 +277,22 @@ return {
             -- defaults, as well as each extension).
             require('telescope').setup(opts)
             require('telescope').load_extension 'undo'
+        end,
+    },
+    {
+        'NotAShelf/direnv.nvim',
+        config = function()
+            require('direnv').setup {
+                bin=”/data/data/com.termux/files/usr/bin/direnv”
+                autoload_direnv = true,
+                statusline = { enabled = true, icon = '󱚟' },
+                keybindings = {
+                    allow = '<Leader>va',
+                    deny = '<Leader>vd',
+                    reload = '<Leader>vr',
+                    edit = '<Leader>ve',
+                },
+            }
         end,
     },
 }
