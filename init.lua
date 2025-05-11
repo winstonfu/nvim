@@ -103,14 +103,11 @@ vim.g.neovide_cursor_animate_command_line = false
 -- vim.g.neovide_scroll_animation_length = 0
 vim.g.neovide_cursor_trail_size = 0
 
--- Set shell
--- vim.opt.shell = '"C:\\Program Files\\Alacritty\\alacritty.exe" -e'
-
 -- Set python dir
-vim.g.python3_host_prog = 'C:/Users/newuser/miniconda3/envs/nvim-env/python.exe'
+vim.g.python3_host_prog = '~/.venvs/nvim/bin/python'
 
 -- Enable autochdir
-vim.opt.autochdir = true
+-- vim.opt.autochdir = true
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -211,7 +208,7 @@ vim.api.nvim_create_autocmd('BufReadCmd', {
 -- })
 
 -- Folds
-vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileReadPost' }, {
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileReadPost', 'BufWrite' }, {
     callback = function()
         vim.defer_fn(function()
             vim.opt.foldmethod = 'expr'
@@ -304,6 +301,7 @@ require('lazy').setup({
         'folke/which-key.nvim',
         event = 'VimEnter', -- Sets the loading event to 'VimEnter'
         opts = {
+            preset = 'helix',
             -- delay between pressing a key and opening which-key (milliseconds)
             -- this setting is independent of vim.opt.timeoutlen
             delay = 0,
@@ -775,6 +773,8 @@ require('lazy').setup({
                 },
 
                 marksman = {},
+
+                tinymist = {},
             }
 
             -- Ensure the servers and tools above are installed
@@ -934,7 +934,7 @@ require('lazy').setup({
             }
 
             -- Lazy-load snippets, i.e. only load when required, e.g. for a given filetype
-            require('luasnip.loaders.from_lua').lazy_load { paths = '~/AppData/Local/nvim/LuaSnip/' }
+            require('luasnip.loaders.from_lua').lazy_load { paths = '~/.config/nvim/LuaSnip/' }
 
             cmp.setup {
                 snippet = {
@@ -1069,22 +1069,22 @@ require('lazy').setup({
             }
 
             local map_mini_ai_move = function(key, textobject_id, text_object_desc)
-                vim.keymap.set({ 'n', 'x' }, ']' .. string.lower(key), function()
+                vim.keymap.set({ 'n', 'x', 'o' }, ']' .. string.lower(key), function()
                     for i = 1, vim.v.count1 do
                         require('mini.ai').move_cursor('left', 'a', textobject_id)
                     end
                 end, { desc = 'Next ' .. text_object_desc .. ' Start' })
-                vim.keymap.set({ 'n', 'x' }, '[' .. string.lower(key), function()
+                vim.keymap.set({ 'n', 'x', 'o' }, '[' .. string.lower(key), function()
                     for i = 1, vim.v.count1 do
                         require('mini.ai').move_cursor('left', 'a', textobject_id, { search_method = 'cover_or_prev' })
                     end
                 end, { desc = 'Prev' .. text_object_desc .. ' Start' })
-                vim.keymap.set({ 'n', 'x' }, ']' .. string.upper(key), function()
+                vim.keymap.set({ 'n', 'x', 'o' }, ']' .. string.upper(key), function()
                     for i = 1, vim.v.count1 do
                         require('mini.ai').move_cursor('right', 'a', textobject_id)
                     end
                 end, { desc = 'Next ' .. text_object_desc .. ' End' })
-                vim.keymap.set({ 'n', 'x' }, '[' .. string.upper(key), function()
+                vim.keymap.set({ 'n', 'x', 'o' }, '[' .. string.upper(key), function()
                     for i = 1, vim.v.count1 do
                         require('mini.ai').move_cursor('right', 'a', textobject_id, { search_method = 'cover_or_prev' })
                     end
@@ -1102,6 +1102,7 @@ require('lazy').setup({
             -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
             -- - sd'   - [S]urround [D]elete [']quotes
             -- - sr)'  - [S]urround [R]eplace [)] [']
+            vim.keymap.set({ 'n', 'x' }, 's', '<Nop>')
             require('mini.surround').setup()
 
             -- Simple and easy statusline.
@@ -1146,7 +1147,7 @@ require('lazy').setup({
             end, { desc = 'Open MiniFiles editor.' })
 
             -- require('mini.misc').setup()
-            -- require('mini.misc').setup_auto_root()
+            require('mini.misc').setup_auto_root()
             -- Autopair
             require('mini.pairs').setup()
             -- Create symmetrical `$$` pair only in Tex files
@@ -1161,19 +1162,19 @@ require('lazy').setup({
             -- Move text
             require('mini.move').setup()
 
-            -- Sessions
-            require('mini.sessions').setup()
-            vim.keymap.set('n', '<leader>ww', function()
-                vim.ui.input({ prompt = 'Session Name' }, function(input)
-                    MiniSessions.write(input)
-                end)
-            end, { desc = 'Save session for auto session root dir' })
-            vim.keymap.set('n', '<leader>wr', function()
-                MiniSessions.select()
-            end, { desc = 'Restore Session' })
-            vim.keymap.set('n', '<leader>wd', function()
-                MiniSessions.select 'delete'
-            end, { desc = 'Delete Session' })
+            -- -- Sessions
+            -- require('mini.sessions').setup()
+            -- vim.keymap.set('n', '<leader>ww', function()
+            --     vim.ui.input({ prompt = 'Session Name' }, function(input)
+            --         MiniSessions.write(input)
+            --     end)
+            -- end, { desc = 'Save session for auto session root dir' })
+            -- vim.keymap.set('n', '<leader>wr', function()
+            --     MiniSessions.select()
+            -- end, { desc = 'Restore Session' })
+            -- vim.keymap.set('n', '<leader>wd', function()
+            --     MiniSessions.select 'delete'
+            -- end, { desc = 'Delete Session' })
         end,
     },
     { -- Highlight, edit, and navigate code

@@ -4,34 +4,12 @@
 -- See the kickstart.nvim README for more information
 return {
     {
-        'linux-cultist/venv-selector.nvim',
-        dependencies = {
-            'neovim/nvim-lspconfig',
-            'mfussenegger/nvim-dap',
-            'mfussenegger/nvim-dap-python', --optional
-            { 'nvim-telescope/telescope.nvim', branch = '0.1.x', dependencies = { 'nvim-lua/plenary.nvim' } },
-        },
-        lazy = false,
-        branch = 'regexp', -- This is the regexp branch, use this for the new version
-        keys = {
-            -- { ',v', '<cmd>VenvSelect<cr>' },
-        },
-        config = function()
-            require('venv-selector').setup {
-                -- anaconda_base_path = vim.fn.expand '~' .. '/miniconda3/',
-                -- anaconda_envs_path = vim.fn.expand '~' .. '/miniconda3/envs',
-            }
-            -- Function to reconfigure dap-python based on selected venv
-            vim.keymap.set('n', '<leader>dv', '<cmd>VenvSelect<cr>', { noremap = true, nowait = true, silent = true, desc = 'Set [D]ocument [V]env' })
-        end,
-    },
-    {
         'lervag/vimtex',
         lazy = false, -- we don't want to lazy load VimTeX
         -- tag = "v2.15", -- uncomment to pin to a specific release
         init = function()
             -- VimTeX configuration goes here, e.g.
-            vim.g.vimtex_view_general_viewer = 'sumatrapdf'
+            vim.g.vimtex_view_general_viewer = 'zathura'
             vim.g.vimtex_view_general_options = '-reuse-instance -forward-search @tex @line @pdf'
             vim.g.vimtex_syntax_enabled = 1
         end,
@@ -165,6 +143,7 @@ return {
     },
     {
         'gelguy/wilder.nvim',
+        lazy = false,
         event = 'CmdlineEnter',
         build = ':UpdateRemotePlugins',
         dependencies = {
@@ -173,7 +152,7 @@ return {
         config = function()
             local wilder = require 'wilder'
             wilder.setup {
-                modes = { ':', '/', '?' },
+                modes = { ':' },
                 next_key = '<C-N>',
                 previous_key = '<C-P>',
                 accept_key = '<C-Y>',
@@ -240,12 +219,23 @@ return {
             buffer_leader_key = 'm', -- Per Buffer Mappings
         },
     },
-    {
-        'tadaa/vimade',
-        opts = {
-            fadelevel = 0.8,
-        },
-    },
+    -- {
+    --     'tadaa/vimade',
+    --     opts = {
+    --         fadelevel = 0.8,
+    --         blocklist = {
+    --             -- replace the built-in function
+    --             default_block_floats = function(win, _)
+    --                 -- block every window whose config shows it’s a float
+    --                 return win.win_config.relative ~= ''
+    --             end,
+    --             arrow_float = {
+    --                 buf_opts = { buftype = { 'nofile' } },
+    --                 buf_name = { '/^Arrow.*/' }, -- Lua-pattern between the slashes
+    --             },
+    --         },
+    --     },
+    -- },
     {
         'stevearc/oil.nvim',
         ---@module 'oil'
@@ -256,5 +246,37 @@ return {
         -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if you prefer nvim-web-devicons
         -- Lazy loading is not recommended because it is very tricky to make it work correctly in all situations.
         lazy = false,
+    },
+    {
+        'debugloop/telescope-undo.nvim',
+        dependencies = { -- note how they're inverted to above example
+            {
+                'nvim-telescope/telescope.nvim',
+                dependencies = { 'nvim-lua/plenary.nvim' },
+            },
+        },
+        keys = {
+            { -- lazy style key map
+                '<leader>u',
+                '<cmd>Telescope undo<cr>',
+                desc = 'undo history',
+            },
+        },
+        opts = {
+            -- don't use `defaults = { }` here, do this in the main telescope spec
+            extensions = {
+                undo = {
+                    -- telescope-undo.nvim config, see below
+                },
+                -- no other extensions here, they can have their own spec too
+            },
+        },
+        config = function(_, opts)
+            -- Calling telescope's setup from multiple specs does not hurt, it will happily merge the
+            -- configs for us. We won't use data, as everything is in it's own namespace (telescope
+            -- defaults, as well as each extension).
+            require('telescope').setup(opts)
+            require('telescope').load_extension 'undo'
+        end,
     },
 }
