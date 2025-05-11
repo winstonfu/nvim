@@ -279,4 +279,19 @@ return {
             require('telescope').load_extension 'undo'
         end,
     },
+    {
+        'NotAShelf/direnv.nvim',
+        config = function()
+            require('direnv').setup {
+                autoload_direnv = true,
+                statusline = { enabled = true, icon = '󱚟' },
+                keybindings = {
+                    allow = '<Leader>va',
+                    deny = '<Leader>vd',
+                    reload = '<Leader>vr',
+                    edit = '<Leader>ve',
+                },
+            }
+        end,
+    },
 }
