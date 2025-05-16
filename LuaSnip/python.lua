@@ -85,4 +85,15 @@ return {
             { i(1) }
         )
     ),
+
+    s(
+        { trig = 'ifmain', name = 'if name main' },
+        fmta(
+            [[
+            if __name__ == "__main__":
+                main()
+            ]],
+            {}
+        )
+    ),
 }

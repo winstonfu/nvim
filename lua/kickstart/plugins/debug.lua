@@ -93,6 +93,13 @@ return {
             desc = '[T]oggle [D]ebug UI',
         },
         {
+            '<leader>bd',
+            function()
+                require('dap').clear_breakpoints()
+            end,
+            desc = 'Clear breakpoints',
+        },
+        {
             '<leader>b<leader>',
             function()
                 require('which-key').show { keys = '<leader>b', loop = true }
@@ -180,13 +187,14 @@ return {
         -- require('dap-python').resolve_python = function()
         --     return vim.fn.expand '~' .. '/miniconda3/'
         -- end
-        table.insert(dap.configurations.python, 2, {
+        table.insert(dap.configurations.python, 1, {
             type = 'python',
             request = 'launch',
-            name = 'Automatic (Python): Launch file',
+            name = 'Python (Current cwd)',
             program = '${file}',
-            pythonPath = function()
-                return require('venv-selector').get_active_path()
+            cwd = function()
+                -- require('mini.misc').find_root()
+                return vim.fn.getcwd()
             end,
         })
     end,

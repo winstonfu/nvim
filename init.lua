@@ -15,7 +15,7 @@ vim.g.have_nerd_font = true
 -- Make line numbers default
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
---  Experiment for yourself to see if you like it!ini
+--  Experiment for yourself to see if you like it!
 vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
@@ -614,7 +614,7 @@ require('lazy').setup({
                     map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
 
                     -- Find references for the word under your cursor.
-                    map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+                    map('grs', require('telescope.builtin').lsp_references, '[G]oto [R]eferences [S]earch')
 
                     -- Jump to the implementation of the word under your cursor.
                     --  Useful when your language has ways of declaring types without an actual implementation.
@@ -1177,7 +1177,10 @@ require('lazy').setup({
             end, { desc = 'Open MiniFiles editor.' })
 
             -- require('mini.misc').setup()
-            require('mini.misc').setup_auto_root()
+            require('mini.misc').setup_auto_root { '.git', 'Makefile', '.marksman.toml' }
+            vim.keymap.set('n', '<leader>wm', function()
+                require('mini.misc').zoom()
+            end, { desc = 'Maximise buffer' })
             -- Autopair
             require('mini.pairs').setup()
             -- Create symmetrical `$$` pair only in Tex files
@@ -1265,7 +1268,7 @@ require('lazy').setup({
     require 'kickstart.plugins.lint',
     -- require 'kickstart.plugins.autopairs',
     -- require 'kickstart.plugins.neo-tree',
-    -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+    require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
     -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
     --    This is the easiest way to modularize your config.

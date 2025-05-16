@@ -16,20 +16,22 @@ return {
     },
     {
         'stevearc/overseer.nvim',
-        opts = {
-            task_list = {
-                bindings = {
-                    ['<M-l>'] = 'IncreaseDetail',
-                    ['<M-h>'] = 'DecreaseDetail',
-                    ['<M-k>'] = 'ScrollOutputUp',
-                    ['<M-j>'] = 'ScrollOutputDown',
-                    ['<C-l>'] = false,
-                    ['<C-h>'] = false,
-                    ['<C-k>'] = false,
-                    ['<C-j>'] = false,
+        config = function()
+            require('overseer').setup {
+                task_list = {
+                    bindings = {
+                        ['<M-l>'] = 'IncreaseDetail',
+                        ['<M-h>'] = 'DecreaseDetail',
+                        ['<M-k>'] = 'ScrollOutputUp',
+                        ['<M-j>'] = 'ScrollOutputDown',
+                        ['<C-l>'] = false,
+                        ['<C-h>'] = false,
+                        ['<C-k>'] = false,
+                        ['<C-j>'] = false,
+                    },
                 },
-            },
-        },
+            }
+        end,
     },
     {
         'epwalsh/obsidian.nvim',
@@ -217,6 +219,9 @@ return {
             show_icons = true,
             leader_key = '\\', -- Recommended to be a single key
             buffer_leader_key = 'm', -- Per Buffer Mappings
+            per_buffer_config = {
+                -- treesitter_context = { line_shift_down = 2 },
+            },
         },
     },
     -- {
@@ -292,6 +297,18 @@ return {
                     edit = '<Leader>ve',
                 },
             }
+        end,
+    },
+    {
+        'AckslD/nvim-neoclip.lua',
+        dependencies = {
+            -- you'll need at least one of these
+            -- {'nvim-telescope/telescope.nvim'},
+            -- {'ibhagwan/fzf-lua'},
+        },
+        config = function()
+            require('neoclip').setup()
+            vim.keymap.set({ 'n', 'x' }, '<leader>sc', '<cmd>Telescope neoclip<CR>', { desc = '[S]earch [C]lipboard (Neoclip)' })
         end,
     },
 }
