@@ -754,12 +754,6 @@ require('lazy').setup({
                         python = {
                             venvPath = workon_home,
                             venv = venv_name,
-                            analysis = {
-                                typeCheckingMode = 'strict',
-                                autoSearchPaths = true,
-                                useLibraryCodeForTypes = true,
-                                diagnosticMode = 'workspace',
-                            },
                         },
                     },
                 },
