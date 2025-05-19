@@ -751,7 +751,7 @@ require('lazy').setup({
                 -- gopls = {},
                 pyright = {
                     settings = {
-                        python {
+                        python = {
                             venvPath = workon_home,
                             venv = venv_name,
                             analysis = {
