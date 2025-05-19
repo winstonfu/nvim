@@ -744,10 +744,25 @@ require('lazy').setup({
             --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
             --  - settings (table): Override the default settings passed when initializing the server.
             --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+            local workon_home = vim.env.WORKON_HOME or '~/.virtualenvs'
+            local venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV or 'default', ':t') -- "qc-sim", etc.
             local servers = {
                 -- clangd = {},
                 -- gopls = {},
-                pyright = {},
+                pyright = {
+                    settings = {
+                        python {
+                            venvPath = workon_home,
+                            venv = venv_name,
+                            analysis = {
+                                typeCheckingMode = 'strict',
+                                autoSearchPaths = true,
+                                useLibraryCodeForTypes = true,
+                                diagnosticMode = 'workspace',
+                            },
+                        },
+                    },
+                },
                 -- rust_analyzer = {},
                 -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
                 --
@@ -1075,7 +1090,7 @@ require('lazy').setup({
             local map_mini_ai_move = function(key, textobject_id, text_object_desc)
                 vim.keymap.set({ 'n', 'x', 'o' }, ']' .. string.lower(key), function()
                     for i = 1, vim.v.count1 do
-                        require('mini.ai').move_cursor('left', 'a', textobject_id)
+                        require('mini.ai').move_cursor('left', 'a', textobject_id, { search_method = 'cover_or_next' })
                     end
                 end, { desc = 'Next ' .. text_object_desc .. ' Start' })
                 vim.keymap.set({ 'n', 'x', 'o' }, '[' .. string.lower(key), function()
@@ -1085,7 +1100,7 @@ require('lazy').setup({
                 end, { desc = 'Prev' .. text_object_desc .. ' Start' })
                 vim.keymap.set({ 'n', 'x', 'o' }, ']' .. string.upper(key), function()
                     for i = 1, vim.v.count1 do
-                        require('mini.ai').move_cursor('right', 'a', textobject_id)
+                        require('mini.ai').move_cursor('right', 'a', textobject_id, { search_method = 'cover_or_next' })
                     end
                 end, { desc = 'Next ' .. text_object_desc .. ' End' })
                 vim.keymap.set({ 'n', 'x', 'o' }, '[' .. string.upper(key), function()
@@ -1162,6 +1177,7 @@ require('lazy').setup({
                 treesitter = { suffix = '' },
                 file = { suffix = '' },
                 buffer = { suffix = '' },
+                oldfile = { suffix = '' },
             }
             vim.keymap.set('n', 'gb', function()
                 require('mini.bracketed').buffer 'forward'

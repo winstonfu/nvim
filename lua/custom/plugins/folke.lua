@@ -169,6 +169,7 @@ return {
                 enable = true,
                 win = { position = 'float' },
             },
+            lazygit = {},
             styles = {
                 terminal = {
                     bo = {
@@ -236,6 +237,13 @@ return {
                     Snacks.scratch.select()
                 end,
                 desc = 'Select Scratch Buffer',
+            },
+            {
+                '<leader>g',
+                function()
+                    Snacks.lazygit.open()
+                end,
+                desc = 'Lazygit',
             },
         },
     },
