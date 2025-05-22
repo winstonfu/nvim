@@ -79,7 +79,7 @@ vim.opt.inccommand = 'nosplit'
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 999
+-- vim.opt.scrolloff = 999
 
 -- -- Centre cursor
 -- vim.api.nvim_create_autocmd({ 'CursorMoved' }, {
@@ -104,7 +104,7 @@ vim.g.neovide_cursor_animate_command_line = false
 vim.g.neovide_cursor_trail_size = 0
 
 -- Set python dir
-vim.g.python3_host_prog = '~/.venvs/nvim/bin/python'
+vim.g.python3_host_prog = '~/.virtualenvs/nvim/bin/python'
 
 -- Enable autochdir
 -- vim.opt.autochdir = true
@@ -118,6 +118,11 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>qd', vim.diagnostic.setloclist, { desc = 'Open [Q]uickfix [D]iagnostic list' })
+
+-- Start and end of line
+vim.keymap.set({ 'n', 'x', 'o' }, 'H', '_')
+vim.keymap.set({ 'n', 'x', 'o' }, 'L', '$')
+vim.keymap.set({ 'n', 'x', 'o' }, 'M', '%')
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
 -- for people to discover. Otherwise, you normally need to press <C-\><C-n>, which
@@ -744,16 +749,16 @@ require('lazy').setup({
             --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
             --  - settings (table): Override the default settings passed when initializing the server.
             --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
-            local workon_home = vim.env.WORKON_HOME or '~/.virtualenvs'
-            local venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV or 'default', ':t') -- "qc-sim", etc.
+            local workon_home = vim.env.WORKON_HOME or vim.fn.expand '~/.virtualenvs'
+            -- local venv_name = vim.fn.fnamemodify(vim.env.VIRTUAL_ENV or 'default', ':t') -- "qc-sim", etc.
+            local venv_name = 'default'
             local servers = {
                 -- clangd = {},
                 -- gopls = {},
                 pyright = {
                     settings = {
                         python = {
-                            venvPath = workon_home,
-                            venv = venv_name,
+                            pythonPath = ('%s/%s/bin/python'):format(workon_home, venv_name),
                         },
                     },
                 },
@@ -806,7 +811,7 @@ require('lazy').setup({
             vim.list_extend(ensure_installed, {
                 'stylua', -- Used to format Lua code
                 -- Python
-                'pyright',
+                -- 'pyright',
                 'mypy',
                 'ruff',
                 'isort',
@@ -821,19 +826,13 @@ require('lazy').setup({
             })
             require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+            for server_name, spec in pairs(servers) do
+                vim.lsp.config(server_name, spec)
+            end
+
             require('mason-lspconfig').setup {
                 ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
                 automatic_installation = false,
-                handlers = {
-                    function(server_name)
-                        local server = servers[server_name] or {}
-                        -- This handles overriding only values explicitly passed
-                        -- by the server configuration above. Useful when disabling
-                        -- certain features of an LSP (for example, turning off formatting for ts_ls)
-                        server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-                        require('lspconfig')[server_name].setup(server)
-                    end,
-                },
             }
         end,
     },
@@ -851,54 +850,90 @@ require('lazy').setup({
                 mode = '',
                 desc = '[F]ormat buffer',
             },
+            { '<leader>tf', '<cmd>FormatToggle!<cr>', mode = '', desc = '[T]oggle buffer autoformat on save.' },
+            { '<leader>tF', '<cmd>FormatToggle<cr>', mode = '', desc = '[T]oggle globale autoformat on save.' },
         },
-        opts = {
-            notify_on_error = false,
-            format_on_save = function(bufnr)
-                -- Disable "format_on_save lsp_fallback" for languages that don't
-                -- have a well standardized coding style. You can add additional
-                -- languages here or re-enable it for the disabled ones.
-                local disable_filetypes = { c = true, cpp = true }
-                local lsp_format_opt
-                if disable_filetypes[vim.bo[bufnr].filetype] then
-                    lsp_format_opt = 'never'
+        config = function()
+            require('conform').setup {
+                notify_on_error = false,
+                format_on_save = function(bufnr)
+                    -- Toggle for disabling autoformat on save.
+                    if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+                        return
+                    end
+                    -- Disable "format_on_save lsp_fallback" for languages that don't
+                    -- have a well standardized coding style. You can add additional
+                    -- languages here or re-enable it for the disabled ones.
+                    local disable_filetypes = { c = true, cpp = true }
+                    local lsp_format_opt
+                    if disable_filetypes[vim.bo[bufnr].filetype] then
+                        lsp_format_opt = 'never'
+                    else
+                        lsp_format_opt = 'fallback'
+                    end
+                    return {
+                        timeout_ms = 2000,
+                        lsp_format = lsp_format_opt,
+                    }
+                end,
+                formatters_by_ft = {
+                    lua = { 'stylua' },
+                    -- Conform can also run multiple formatters sequentially
+                    python = { 'isort', 'ruff_fix', 'ruff_format' },
+                    tex = { 'texlab' },
+                    markdown = { 'prettier' },
+                    yaml = { 'prettier' },
+                    --
+                    -- You can use 'stop_after_first' to run the first available formatter from the list
+                    -- javascript = { "prettierd", "prettier", stop_after_first = true },
+                },
+                formatters = {
+                    isort = {
+                        command = 'isort',
+                        args = { '-' },
+                        stdin = true,
+                    },
+                    ruff_fix = {
+                        command = 'ruff',
+                        args = { 'check', '--fix', '--stdin-filename', '$FILENAME', '-' },
+                        stdin = true,
+                    },
+                    ruff_format = {
+                        command = 'ruff',
+                        args = { 'format', '-' },
+                        stdin = true,
+                    },
+                },
+            }
+            vim.api.nvim_create_user_command('FormatDisable', function(args)
+                if args.bang then
+                    -- FormatDisable! will disable formatting just for this buffer
+                    vim.b.disable_autoformat = true
                 else
-                    lsp_format_opt = 'fallback'
+                    vim.g.disable_autoformat = true
                 end
-                return {
-                    timeout_ms = 2000,
-                    lsp_format = lsp_format_opt,
-                }
-            end,
-            formatters_by_ft = {
-                lua = { 'stylua' },
-                -- Conform can also run multiple formatters sequentially
-                python = { 'isort', 'ruff_fix', 'ruff_format' },
-                tex = { 'texlab' },
-                markdown = { 'prettier' },
-                yaml = { 'prettier' },
-                --
-                -- You can use 'stop_after_first' to run the first available formatter from the list
-                -- javascript = { "prettierd", "prettier", stop_after_first = true },
-            },
-            formatters = {
-                isort = {
-                    command = 'isort',
-                    args = { '-' },
-                    stdin = true,
-                },
-                ruff_fix = {
-                    command = 'ruff',
-                    args = { 'check', '--fix', '--stdin-filename', '$FILENAME', '-' },
-                    stdin = true,
-                },
-                ruff_format = {
-                    command = 'ruff',
-                    args = { 'format', '-' },
-                    stdin = true,
-                },
-            },
-        },
+            end, {
+                desc = 'Disable autoformat-on-save',
+                bang = true,
+            })
+            vim.api.nvim_create_user_command('FormatEnable', function()
+                vim.b.disable_autoformat = false
+                vim.g.disable_autoformat = false
+            end, {
+                desc = 'Re-enable autoformat-on-save',
+            })
+            vim.api.nvim_create_user_command('FormatToggle', function(args)
+                if args.bang then
+                    -- FormatToggle! will toggle formatting just for this buffer
+                    vim.b.disable_autoformat = not vim.b.disable_autoformat
+                else
+                    vim.g.disable_autoformat = not vim.g.disable_autoformat
+                end
+            end, {
+                desc = 'Toggle autoformat-on-save',
+                bang = true,
+            })
+        end,
     },
 
     { -- Autocompletion
@@ -1084,7 +1119,7 @@ require('lazy').setup({
             local map_mini_ai_move = function(key, textobject_id, text_object_desc)
                 vim.keymap.set({ 'n', 'x', 'o' }, ']' .. string.lower(key), function()
                     for i = 1, vim.v.count1 do
-                        require('mini.ai').move_cursor('left', 'a', textobject_id, { search_method = 'cover_or_next' })
+                        require('mini.ai').move_cursor('left', 'a', textobject_id, { search_method = 'next' })
                     end
                 end, { desc = 'Next ' .. text_object_desc .. ' Start' })
                 vim.keymap.set({ 'n', 'x', 'o' }, '[' .. string.lower(key), function()
@@ -1099,7 +1134,7 @@ require('lazy').setup({
                 end, { desc = 'Next ' .. text_object_desc .. ' End' })
                 vim.keymap.set({ 'n', 'x', 'o' }, '[' .. string.upper(key), function()
                     for i = 1, vim.v.count1 do
-                        require('mini.ai').move_cursor('right', 'a', textobject_id, { search_method = 'cover_or_prev' })
+                        require('mini.ai').move_cursor('right', 'a', textobject_id, { search_method = 'prev' })
                     end
                 end, { desc = 'Prev ' .. text_object_desc .. ' End' })
             end
@@ -1137,6 +1172,19 @@ require('lazy').setup({
                         local fileinfo = statusline.section_fileinfo { trunc_width = 120 }
                         local location = statusline.section_location { trunc_width = 75 }
                         local search = statusline.section_searchcount { trunc_width = 75 }
+                        local formatter = function()
+                            local format_enabled = true
+                            if vim.g.disable_autoformat then
+                                format_enabled = false
+                            elseif vim.b.disable_autoformat then
+                                format_enabled = false
+                            end
+                            if format_enabled then
+                                return '󰝖 Enabled'
+                            else
+                                return '󰝖 Disabled'
+                            end
+                        end
 
                         return statusline.combine_groups {
                             { hl = mode_hl, strings = { mode } },
@@ -1144,7 +1192,7 @@ require('lazy').setup({
                             '%<', -- Mark general truncate point
                             { hl = 'MiniStatuslineFilename', strings = { filename } },
                             '%=', -- End left alignment
-                            { hl = 'MiniStatuslineFileinfo', strings = { require('direnv').statusline(), fileinfo } },
+                            { hl = 'MiniStatuslineFileinfo', strings = { formatter(), require('direnv').statusline(), fileinfo } },
                             { hl = mode_hl, strings = { search, location } },
                         }
                     end,

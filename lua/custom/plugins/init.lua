@@ -98,6 +98,7 @@ return {
                 -- your options here (see doc/zotcite.txt)
                 open_in_zotero = true,
             }
+            vim.keymap.set('n', '<leader>zl', '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr>')
         end,
     },
     {
@@ -303,6 +304,32 @@ return {
         config = function()
             require('neoclip').setup()
             vim.keymap.set({ 'n', 'x' }, '<leader>sc', '<cmd>Telescope neoclip<CR>', { desc = '[S]earch [C]lipboard (Neoclip)' })
+        end,
+    },
+    {
+        'arnamak/stay-centered.nvim',
+        config = function()
+            require('stay-centered').setup()
+        end,
+    },
+    {
+        'LudoPinelli/comment-box.nvim',
+        config = function()
+            local keymap = vim.keymap.set
+            local opts = { noremap = true, silent = true }
+
+            -- Titles
+            keymap({ 'n', 'v' }, '<Leader>mb', '<Cmd>CBccbox<CR>', { noremap = true, silent = true, desc = 'CommentBox Title' })
+            -- Named parts
+            keymap({ 'n', 'v' }, '<Leader>mt', '<Cmd>CBllline<CR>', { noremap = true, silent = true, desc = 'CommentBox Titled Line' })
+            -- Simple line
+            keymap('n', '<Leader>ml', '<Cmd>CBline<CR>', { noremap = true, silent = true, desc = 'CommentBox Simple Line' })
+            -- keymap("i", "<M-l>", "<Cmd>CBline<CR>", opts) -- To use in Insert Mode
+            -- Marked comments
+            keymap({ 'n', 'v' }, '<Leader>mm', '<Cmd>CBllbox14<CR>', { noremap = true, silent = true, desc = 'CommentBox Marked' })
+            -- Removing a box is simple enough with the command (CBd), but if you
+            -- use it a lot:
+            keymap({ 'n', 'v' }, '<Leader>md', '<Cmd>CBd<CR>', { noremap = true, silent = true, desc = 'CommentBox Remove' })
         end,
     },
 }

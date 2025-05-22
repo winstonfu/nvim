@@ -111,6 +111,7 @@ return {
             function()
                 require('dapui').eval()
             end,
+            desc = 'Evaluate expression',
         },
     },
     config = function()
