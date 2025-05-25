@@ -9,8 +9,7 @@ return {
         -- tag = "v2.15", -- uncomment to pin to a specific release
         init = function()
             -- VimTeX configuration goes here, e.g.
-            vim.g.vimtex_view_general_viewer = 'zathura'
-            vim.g.vimtex_view_general_options = '-reuse-instance -forward-search @tex @line @pdf'
+            vim.g.vimtex_view_method = 'zathura'
             vim.g.vimtex_syntax_enabled = 1
         end,
     },
@@ -78,11 +77,11 @@ return {
                     folder = '01 Chronos',
                 },
             }
-            vim.keymap.set('n', '<leader>sv', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[S]earch Obsidian [V]ault' })
-            vim.keymap.set('n', '<leader>os', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[O]bsidian [S]earch Vault' })
-            vim.keymap.set('n', '<leader>oo', '<cmd>ObsidianOpen<cr>', { desc = '[O]bsidian Get [B]acklinks' })
-            vim.keymap.set('n', '<leader>ob', '<cmd>ObsidianBacklinks<cr>', { desc = '[O]bsidian Get [B]acklinks' })
-            vim.keymap.set('n', '<leader>od', '<cmd>ObsidianToday<cr>', { desc = '[O]bsidian Create [D]aily Note' })
+            vim.keymap.set('n', '<leader>sv', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[S]earch Obsidian [V]ault', buffer = true })
+            vim.keymap.set('n', '<leader>os', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[O]bsidian [S]earch Vault', buffer = true })
+            vim.keymap.set('n', '<leader>oo', '<cmd>ObsidianOpen<cr>', { desc = '[O]bsidian [O]pen', buffer = true })
+            vim.keymap.set('n', '<leader>ob', '<cmd>ObsidianBacklinks<cr>', { desc = '[O]bsidian Get [B]acklinks', buffer = true })
+            vim.keymap.set('n', '<leader>od', '<cmd>ObsidianToday<cr>', { desc = '[O]bsidian Create [D]aily Note', buffer = true })
             vim.opt_local.conceallevel = 1
         end,
     },
@@ -92,13 +91,24 @@ return {
             'nvim-treesitter/nvim-treesitter',
             'nvim-telescope/telescope.nvim',
         },
-        ft = { 'markdown', 'tex' },
+        -- ft = { 'markdown', 'tex' },
         config = function()
             require('zotcite').setup {
                 -- your options here (see doc/zotcite.txt)
                 open_in_zotero = true,
+                keys = {
+                    '<leader>zl',
+                    '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr>',
+                    desc = 'Convert Zotero Citekey to Markdown Link',
+                },
             }
-            vim.keymap.set('n', '<leader>zl', '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr>')
+            vim.keymap.set(
+                'n',
+                '<leader>zl',
+                '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr>',
+                { desc = 'Convert Zotero Citekey to Markdown Link', buffer = true }
+            )
+            vim.keymap.set('n', '<leader>zz', '<cmd>Zselectannotations<cr>', { desc = 'Insert annotations from Zotero', buffer = true })
         end,
     },
     {
@@ -331,5 +341,20 @@ return {
             -- use it a lot:
             keymap({ 'n', 'v' }, '<Leader>md', '<Cmd>CBd<CR>', { noremap = true, silent = true, desc = 'CommentBox Remove' })
         end,
+    },
+    {
+        'mikesmithgh/kitty-scrollback.nvim',
+        enabled = true,
+        lazy = true,
+        cmd = { 'KittyScrollbackGenerateKittens', 'KittyScrollbackCheckHealth', 'KittyScrollbackGenerateCommandLineEditing' },
+        event = { 'User KittyScrollbackLaunch' },
+        -- version = '*', -- latest stable version, may have breaking changes if major version changed
+        -- version = '^6.0.0', -- pin major version, include fixes and features that do not have breaking changes
+        config = function()
+            require('kitty-scrollback').setup()
+        end,
+    },
+    {
+        'subnut/nvim-ghost.nvim',
     },
 }

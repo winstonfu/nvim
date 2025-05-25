@@ -226,6 +226,15 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'FileReadPost', 'BufWrite' }, {
     end,
 })
 
+vim.api.nvim_create_autocmd('User', {
+    pattern = 'www.overleaf.com',
+    group = vim.api.nvim_create_augroup('nvim_ghost_user_autocommands', { clear = true }),
+    callback = function(ev)
+        local buf = ev.buf
+        vim.bo[buf].filetype = 'tex'
+    end,
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -361,6 +370,8 @@ require('lazy').setup({
                 { '<leader>b', group = 'De[b]ug', mode = { 'n' } },
                 { '<leader>x', group = 'Diagnostis (Trouble)', mode = { 'n' } },
                 { '<leader>v', group = 'Diren[v]', mode = { 'n' } },
+                { '<leader>z', group = '[Z]otcite', mode = { 'n' } },
+                { '<leader>m', group = 'Co[m]ment Blocks', mode = { 'n' } },
             },
         },
         keys = {
@@ -384,6 +395,13 @@ require('lazy').setup({
                     require('which-key').show { keys = '[', loop = true }
                 end,
                 desc = 'Bracket jump backward Hydra Mode (which-key)',
+            },
+            {
+                '<leader>?',
+                function()
+                    require('which-key').show { global = false }
+                end,
+                desc = 'Buffer Local Keymaps (which-key)',
             },
         },
     },
@@ -792,6 +810,20 @@ require('lazy').setup({
                 tinymist = {},
 
                 ltex = {},
+
+                texlab = {},
+
+                -- texlab = {
+                --     single_file_support = true,
+                --     root_dir = function(bufnr, on_dir)
+                --         local name = vim.api.nvim_buf_get_name(bufnr)
+                --         if name == '' then -- unsaved GhostText buf
+                --             return on_dir(vim.loop.cwd()) --  <-- fallback workspace
+                --         end
+                --         -- equivalent of util.root_pattern in lspconfig
+                --         on_dir(vim.fs.root(bufnr, { '.git', '.latexmkrc', '.texlabroot' }) or vim.fs.dirname(name))
+                --     end,
+                -- },
             }
 
             -- Ensure the servers and tools above are installed
@@ -815,8 +847,6 @@ require('lazy').setup({
                 'mypy',
                 'ruff',
                 'isort',
-                -- LaTeX
-                'texlab',
                 -- Markdown
                 'marksman',
                 'markdownlint',
@@ -929,6 +959,7 @@ require('lazy').setup({
                 else
                     vim.g.disable_autoformat = not vim.g.disable_autoformat
                 end
+                vim.cmd.redrawstatus()
             end, {
                 desc = 'Toggle autoformat-on-save',
                 bang = true,
@@ -972,6 +1003,7 @@ require('lazy').setup({
             'hrsh7th/cmp-nvim-lsp',
             'hrsh7th/cmp-path',
             'hrsh7th/cmp-nvim-lsp-signature-help',
+            'micangl/cmp-vimtex',
         },
         config = function()
             -- See `:help cmp`
@@ -1055,12 +1087,21 @@ require('lazy').setup({
                     { name = 'path' },
                     { name = 'nvim_lsp_signature_help' },
                     { name = 'cmp_zotcite' },
+                    { name = 'vimtex' },
+                    -- { name = 'texlab' },
                 },
             }
             vim.api.nvim_set_keymap('i', '<C-n>', '<Plug>luasnip-next-choice', {})
             vim.api.nvim_set_keymap('s', '<C-n>', '<Plug>luasnip-next-choice', {})
             vim.api.nvim_set_keymap('i', '<C-p>', '<Plug>luasnip-prev-choice', {})
             vim.api.nvim_set_keymap('s', '<C-p>', '<Plug>luasnip-prev-choice', {})
+
+            -- This does not seem to work yet as enable_autosnippets is checked once when LuaSnip is setup.
+            -- vim.keymap.set('n', '<leader>ts', function()
+            --     local ls = require 'luasnip'
+            --     ls.config.enable_autosnippets = not ls.config.enable_autosnippets
+            --     vim.cmd.redrawstatus()
+            -- end, { desc = '[T]oggle [S]nippet Autoexpansion' })
         end,
     },
 
@@ -1180,9 +1221,18 @@ require('lazy').setup({
                                 format_enabled = false
                             end
                             if format_enabled then
-                                return '󰝖 Enabled'
+                                return '󰝖 on'
                             else
-                                return '󰝖 Disabled'
+                                return '󰝖 off'
+                            end
+                        end
+
+                        local snippet_expand = function()
+                            local glyph = '󰁌 '
+                            if require('luasnip').config.enable_autosnippets then
+                                return glyph .. 'on'
+                            else
+                                return glyph .. 'off'
                             end
                         end
 
