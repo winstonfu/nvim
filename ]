@@ -118,7 +118,6 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>qd', vim.diagnostic.setloclist, { desc = 'Open [Q]uickfix [D]iagnostic list' })
-vim.keymap.set('n', '<leader>td', function() vim.diagnostic.enable(not vim.diagnostic.is_enabled()) end, { desc = '[T]oggle [D]iagnostic Messages' })
 
 -- Start and end of line
 vim.keymap.set({ 'n', 'x', 'o' }, 'H', '_')
@@ -935,10 +934,6 @@ require('lazy').setup({
                         args = { 'format', '-' },
                         stdin = true,
                     },
-                    prettier = {
-                        command = 'prettier',
-                        prepend_args = { '--tab-width', '4' },
-                    },
                 },
             }
             vim.api.nvim_create_user_command('FormatDisable', function(args)
@@ -1010,10 +1005,6 @@ require('lazy').setup({
             'hrsh7th/cmp-path',
             'hrsh7th/cmp-nvim-lsp-signature-help',
             'micangl/cmp-vimtex',
-            {
-                'jalvesaq/cmp-zotcite',
-                ft = { 'markdown' },
-            },
         },
         config = function()
             -- See `:help cmp`
@@ -1164,6 +1155,7 @@ require('lazy').setup({
                     },
                     h = spec_treesitter { a = '@class.outer', i = '@class.inner' },
                     g = gen_spec.function_call(),
+                    c = spec_treesitter { a = '@comment.outer', i = '@comment.inner' },
                 },
             }
 
@@ -1195,6 +1187,7 @@ require('lazy').setup({
             map_mini_ai_move('a', 'a', 'Argument')
             map_mini_ai_move('h', 'h', 'Class')
             map_mini_ai_move('o', 'o', 'Conditional / Loop')
+            map_mini_ai_move('c', 'c', 'Comment')
 
             -- Add/delete/replace surroundings (brackets, quotes, etc.)
             --
@@ -1312,58 +1305,6 @@ require('lazy').setup({
 
             -- Move text
             require('mini.move').setup()
-
-            -- Mini Keymaps
-            local map_multistep = require('mini.keymap').map_multistep
-
-            local cursor_in_list = function()
-                local list_nodes = { markdown = { 'list', 'list_item', 'task_list_item' } }
-                local valid = list_nodes[vim.bo.filetype]
-                if not valid then
-                    return false
-                end
-                local node = vim.treesitter.get_node() -- node under cursor
-                while node do
-                    local t = node:type()
-                    for _, v in ipairs(valid) do
-                        if t == v then
-                            return true
-                        end
-                    end
-                    node = node:parent()
-                end
-                return false
-            end
-            local cursor_at_start = function()
-                return vim.api.nvim_win_get_cursor(0)[2] == 0
-            end
-
-            map_multistep('i', '<Tab>', {
-                {
-                    condition = cursor_at_start,
-                    action = function()
-                        return '<Tab>'
-                    end,
-                },
-                {
-                    condition = cursor_in_list,
-                    action = function()
-                        return '<Plug>(bullets-demote)'
-                    end,
-                    'increase_indent',
-                },
-            })
-            map_multistep('i', '<S-Tab>', {
-                {
-                    condition = cursor_in_list,
-                    action = function()
-                        return '<Plug>(bullets-promote)'
-                    end,
-                },
-                'decrease_indent',
-            })
-            map_multistep('i', '<CR>', { 'cmp_accept', 'minipairs_cr' })
-            map_multistep('i', '<BS>', { 'minipairs_bs' })
 
             -- -- Sessions
             -- require('mini.sessions').setup()

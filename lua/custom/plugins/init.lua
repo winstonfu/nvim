@@ -33,7 +33,7 @@ return {
         end,
     },
     {
-        'epwalsh/obsidian.nvim',
+        'obsidian-nvim/obsidian.nvim',
         version = '*', -- recommended, use latest release instead of latest commit
         lazy = true,
         ft = 'markdown',
@@ -96,26 +96,23 @@ return {
             require('zotcite').setup {
                 -- your options here (see doc/zotcite.txt)
                 open_in_zotero = true,
-                keys = {
-                    '<leader>zl',
-                    '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr>',
-                    desc = 'Convert Zotero Citekey to Markdown Link',
-                },
             }
             vim.keymap.set(
                 'n',
                 '<leader>zl',
-                '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr>',
+                '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
                 { desc = 'Convert Zotero Citekey to Markdown Link', buffer = true }
+            )
+            vim.keymap.set(
+                'n',
+                '<leader>zL',
+                '<cmd>%s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
+                { desc = 'Convert Zotero Citekey to Markdown Link (Entire File)', buffer = true }
             )
             vim.keymap.set('n', '<leader>zz', '<cmd>Zselectannotations<cr>', { desc = 'Insert annotations from Zotero', buffer = true })
         end,
     },
-    {
-        'jalvesaq/cmp-zotcite',
-        ft = { 'markdown', 'tex' },
-        opts = {},
-    },
+
     {
         'bullets-vim/bullets.vim',
         ft = { 'markdown' },
@@ -356,5 +353,93 @@ return {
     },
     {
         'subnut/nvim-ghost.nvim',
+    },
+    {
+        'jake-stewart/multicursor.nvim',
+        branch = '1.0',
+        config = function()
+            local mc = require 'multicursor-nvim'
+            mc.setup()
+
+            local set = vim.keymap.set
+
+            -- Add or skip cursor above/below the main cursor.
+            set({ 'n', 'x' }, '<up>', function()
+                mc.lineAddCursor(-1)
+            end)
+            set({ 'n', 'x' }, '<down>', function()
+                mc.lineAddCursor(1)
+            end)
+            set({ 'n', 'x' }, '<Tab><up>', function()
+                mc.lineSkipCursor(-1)
+            end)
+            set({ 'n', 'x' }, '<Tab><down>', function()
+                mc.lineSkipCursor(1)
+            end)
+            set({ 'n', 'x' }, '<Tab>k', function()
+                mc.lineAddCursor(-1)
+            end)
+            set({ 'n', 'x' }, '<Tab>j', function()
+                mc.lineAddCursor(1)
+            end)
+            set({ 'n', 'x' }, '<Tab>K', function()
+                mc.lineSkipCursor(-1)
+            end)
+            set({ 'n', 'x' }, '<Tab>J', function()
+                mc.lineSkipCursor(1)
+            end)
+
+            -- Add or skip adding a new cursor by matching word/selection
+            set({ 'n', 'x' }, '<Tab>n', function()
+                mc.matchAddCursor(1)
+            end, { desc = 'Add new cursor at next matching word' })
+            set({ 'n', 'x' }, '<Tab>s', function()
+                mc.matchSkipCursor(1)
+            end, { desc = 'Skip cursor at next matching word' })
+            set({ 'n', 'x' }, '<Tab>N', function()
+                mc.matchAddCursor(-1)
+            end, { desc = 'Skip cursor at prev matching word' })
+            set({ 'n', 'x' }, '<Tab>S', function()
+                mc.matchSkipCursor(-1)
+            end, { desc = 'Add new cursor at prev matching word' })
+
+            -- Add and remove cursors with control + left click.
+            set('n', '<c-leftmouse>', mc.handleMouse)
+            set('n', '<c-leftdrag>', mc.handleMouseDrag)
+            set('n', '<c-leftrelease>', mc.handleMouseRelease)
+
+            -- Disable and enable cursors.
+            set({ 'n', 'x' }, '<c-q>', mc.toggleCursor)
+
+            -- Mappings defined in a keymap layer only apply when there are
+            -- multiple cursors. This lets you have overlapping mappings.
+            mc.addKeymapLayer(function(layerSet)
+                -- Select a different cursor as the main one.
+                layerSet({ 'n', 'x' }, '<left>', mc.prevCursor)
+                layerSet({ 'n', 'x' }, '<right>', mc.nextCursor)
+
+                -- Delete the main cursor.
+                layerSet({ 'n', 'x' }, '<Tab>x', mc.deleteCursor)
+
+                -- Enable and clear cursors using escape.
+                layerSet('n', '<esc>', function()
+                    if not mc.cursorsEnabled() then
+                        mc.enableCursors()
+                    else
+                        mc.clearCursors()
+                    end
+                end)
+            end)
+
+            -- Customize how cursors look.
+            local hl = vim.api.nvim_set_hl
+            hl(0, 'MultiCursorCursor', { reverse = true })
+            hl(0, 'MultiCursorVisual', { link = 'Visual' })
+            hl(0, 'MultiCursorSign', { link = 'SignColumn' })
+            hl(0, 'MultiCursorMatchPreview', { link = 'Search' })
+            hl(0, 'MultiCursorDisabledCursor', { reverse = true })
+            hl(0, 'MultiCursorDisabledVisual', { link = 'Visual' })
+            hl(0, 'MultiCursorDisabledSign', { link = 'SignColumn' })
+        end,
     },
 }
