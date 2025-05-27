@@ -1,7 +1,11 @@
 local ls = require 'luasnip'
-local f = ls.function_node
-local d = ls.dynamic_node
-local r = ls.restore_node
+local s = ls.snippet --@type fun(trig:any, nodes:any, opts?:table):luasnip.Snippet
+local t = ls.text_node --@type fun(text:string|string[]):luasnip.TextNode
+local f = ls.function_node --@type fun(fn:function, pos?:number[]):luasnip.FunctionNode
+local i = ls.insert_node --@type fun(pos:number, text?:string|string[]):luasnip.InsertNode
+local c = ls.choice_node --@type fun(pos:number, nodes:any[]):luasnip.ChoiceNode
+local d = ls.dynamic_node --@type fun(pos:number, fn:function, args?:any[]):luasnip.DynamicNode
+local sn = ls.snippet_node
 
 -- Auxiliary functions
 

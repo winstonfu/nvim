@@ -118,7 +118,9 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>qd', vim.diagnostic.setloclist, { desc = 'Open [Q]uickfix [D]iagnostic list' })
-vim.keymap.set('n', '<leader>td', function() vim.diagnostic.enable(not vim.diagnostic.is_enabled()) end, { desc = '[T]oggle [D]iagnostic Messages' })
+vim.keymap.set('n', '<leader>td', function()
+    vim.diagnostic.enable(not vim.diagnostic.is_enabled(), { bufnr = 0 })
+end, { desc = '[T]oggle [D]iagnostic Messages' })
 
 -- Start and end of line
 vim.keymap.set({ 'n', 'x', 'o' }, 'H', '_')
@@ -236,6 +238,30 @@ vim.api.nvim_create_autocmd('User', {
     end,
 })
 
+-- Prevent Overseer and DapUI from being simulataneously open
+vim.api.nvim_create_autocmd('FileType', {
+    group = vim.api.nvim_create_augroup('overseer_open', { clear = true }),
+    pattern = 'OverseerList',
+    callback = function()
+        require('dapui').close()
+    end,
+})
+
+vim.api.nvim_create_autocmd({ 'BufWinEnter', 'WinNew' }, {
+    group = vim.api.nvim_create_augroup('dapui_open', { clear = true }),
+    callback = function(args)
+        local ft = vim.bo[args.buf].filetype
+        if ft:match '^dapui_' or ft == 'dap-repl' then
+            vim.cmd 'OverseerClose'
+            for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+                if vim.api.nvim_buf_get_name(buf) == '' then
+                    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+                end
+            end
+        end
+    end,
+})
+
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
@@ -261,7 +287,7 @@ vim.opt.rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
     -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-    'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+    -- 'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
 
     -- NOTE: Plugins can also be added by using a table,
     -- with the first argument being the link and the following
@@ -1055,7 +1081,7 @@ require('lazy').setup({
 
                     -- If you prefer more traditional completion keymaps,
                     -- you can uncomment the following lines
-                    --['<CR>'] = cmp.mapping.confirm { select = true },
+                    ['<CR>'] = cmp.mapping.confirm { select = true },
                     --['<Tab>'] = cmp.mapping.select_next_item(),
                     --['<S-Tab>'] = cmp.mapping.select_prev_item(),
 

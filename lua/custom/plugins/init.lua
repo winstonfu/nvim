@@ -68,20 +68,25 @@ return {
                         action = function()
                             return require('obsidian').util.toggle_checkbox()
                         end,
-                        opts = { buffer = true },
+                        opts = { buffer = true, desc = 'Obsidian Toggle Checkbox' },
                     },
+                    ['<leader>sv'] = { action = '<cmd>ObsidianQuickSwitch<cr>', opts = { desc = '[S]earch Obsidian [V]ault', buffer = true } },
+                    ['<leader>os'] = { action = '<cmd>ObsidianQuickSwitch<cr>', opts = { desc = '[O]bsidian [S]earch Vault', buffer = true } },
+                    ['<leader>oo'] = { action = '<cmd>ObsidianOpen<cr>', opts = { desc = '[O]bsidian [O]pen', buffer = true } },
+                    ['<leader>ob'] = { action = '<cmd>ObsidianBacklinks<cr>', opts = { desc = '[O]bsidian Get [B]acklinks', buffer = true } },
+                    ['<leader>od'] = { action = '<cmd>ObsidianToday<cr>', opts = { desc = '[O]bsidian Create [D]aily Note', buffer = true } },
+
                     -- ['<leader>ch'] = false,
                 },
                 daily_notes = {
                     -- Optional, if you keep daily notes in a separate directory.
                     folder = '01 Chronos',
                 },
+                note_id_func = function(title)
+                    return title
+                end,
             }
-            vim.keymap.set('n', '<leader>sv', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[S]earch Obsidian [V]ault', buffer = true })
-            vim.keymap.set('n', '<leader>os', '<cmd>ObsidianQuickSwitch<cr>', { desc = '[O]bsidian [S]earch Vault', buffer = true })
-            vim.keymap.set('n', '<leader>oo', '<cmd>ObsidianOpen<cr>', { desc = '[O]bsidian [O]pen', buffer = true })
-            vim.keymap.set('n', '<leader>ob', '<cmd>ObsidianBacklinks<cr>', { desc = '[O]bsidian Get [B]acklinks', buffer = true })
-            vim.keymap.set('n', '<leader>od', '<cmd>ObsidianToday<cr>', { desc = '[O]bsidian Create [D]aily Note', buffer = true })
+
             vim.opt_local.conceallevel = 1
         end,
     },
@@ -97,25 +102,33 @@ return {
                 -- your options here (see doc/zotcite.txt)
                 open_in_zotero = true,
             }
-            vim.keymap.set(
-                'n',
-                '<leader>zl',
-                '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
-                { desc = 'Convert Zotero Citekey to Markdown Link', buffer = true }
-            )
-            vim.keymap.set(
-                'n',
-                '<leader>zL',
-                '<cmd>%s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
-                { desc = 'Convert Zotero Citekey to Markdown Link (Entire File)', buffer = true }
-            )
-            vim.keymap.set('n', '<leader>zz', '<cmd>Zselectannotations<cr>', { desc = 'Insert annotations from Zotero', buffer = true })
         end,
     },
 
     {
         'bullets-vim/bullets.vim',
         ft = { 'markdown' },
+        init = function()
+            vim.g.bullets_set_mappings = 0
+
+            -- 2. provide your own maps (array-of-arrays)
+            vim.g.bullets_custom_mappings = {
+                { 'imap', '<CR>', '<Plug>(bullets-newline)' }, -- ↩ in insert
+                { 'inoremap', '<C-CR>', '<CR>' }, -- Ctrl-↩ literal newline
+                { 'nmap', 'o', '<Plug>(bullets-newline)' }, -- o in normal
+                { 'vmap', 'gN', '<Plug>(bullets-renumber)' },
+                { 'nmap', 'gN', '<Plug>(bullets-renumber)' },
+                -- { 'nmap', '<leader>x', '<Plug>(bullets-toggle-checkbox)' },
+
+                { 'imap', '<C-t>', '<Plug>(bullets-demote)' },
+                { 'nmap', '>>', '<Plug>(bullets-demote)' },
+                { 'vmap', '>', '<Plug>(bullets-demote)' },
+
+                { 'imap', '<C-d>', '<Plug>(bullets-promote)' },
+                { 'nmap', '<<', '<Plug>(bullets-promote)' },
+                { 'vmap', '<', '<Plug>(bullets-promote)' },
+            }
+        end,
     },
     {
         {
