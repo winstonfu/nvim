@@ -1,6 +1,7 @@
 local set_text = function()
     vim.opt_local.linebreak = true
     vim.opt_local.spell = true
+    vim.opt_local.conceallevel = 1
 end
 
 return {
@@ -9,13 +10,13 @@ return {
     vim.keymap.set(
         'n',
         '<leader>zl',
-        '<cmd>s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
+        '<cmd>s/\\v((\\[)@<!\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9|_]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
         { desc = 'Convert Zotero Citekey to Markdown Link', buffer = true }
     ),
     vim.keymap.set(
         'n',
         '<leader>zL',
-        '<cmd>%s/\\v(\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
+        '<cmd>%s/\\v((\\[)@<!\\@([A-Z|0-9]{8})#[A-Z|a-z|+|\\-|0-9|_]+)/[\\1](zotero:\\/\\/select\\/items\\/0_\\2)<cr><esc>',
         { desc = 'Convert Zotero Citekey to Markdown Link (Entire File)', buffer = true }
     ),
 

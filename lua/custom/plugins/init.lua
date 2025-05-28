@@ -75,6 +75,9 @@ return {
                     ['<leader>oo'] = { action = '<cmd>ObsidianOpen<cr>', opts = { desc = '[O]bsidian [O]pen', buffer = true } },
                     ['<leader>ob'] = { action = '<cmd>ObsidianBacklinks<cr>', opts = { desc = '[O]bsidian Get [B]acklinks', buffer = true } },
                     ['<leader>od'] = { action = '<cmd>ObsidianToday<cr>', opts = { desc = '[O]bsidian Create [D]aily Note', buffer = true } },
+                    ['<leader>og'] = { action = '<cmd>ObsidianSearch<cr>', opts = { desc = '[O]bsidian [G]rep Vault', buffer = true } },
+                    ['<leader>ot'] = { action = '<cmd>ObsidianTemplate<cr>', opts = { desc = '[O]bsidian [T]emplate', buffer = true } },
+                    ['<leader>op'] = { action = '<cmd>ObsidianPasteImg<cr>', opts = { desc = '[O]bsidian [P]aste Image', buffer = true } },
 
                     -- ['<leader>ch'] = false,
                 },
@@ -85,9 +88,10 @@ return {
                 note_id_func = function(title)
                     return title
                 end,
+                templates = { folder = 'Templates' },
+                attachments = { img_folder = 'Files/Images' },
+                -- completion = { nvim_cmp = false },
             }
-
-            vim.opt_local.conceallevel = 1
         end,
     },
     {
@@ -329,7 +333,7 @@ return {
     {
         'arnamak/stay-centered.nvim',
         config = function()
-            require('stay-centered').setup()
+            require('stay-centered').setup { disable_on_mouse = true }
         end,
     },
     {

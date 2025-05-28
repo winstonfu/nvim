@@ -183,8 +183,11 @@ return {
                     'Files',
                     'Files/Images',
                 },
+                doc = {
+                    inline = false,
+                },
                 math = {
-                    enabled = false, -- enable math expression rendering
+                    enabled = true, -- enable math expression rendering
                     -- in the templates below, `${header}` comes from any section in your document,
                     -- between a start/end header comment. Comment syntax is language-specific.
                     -- * start comment: `// snacks: header start`
@@ -201,14 +204,15 @@ return {
                         font_size = 'normalsize', -- see https://www.sascha-frank.com/latex-font-size.html
                         -- for latex documents, the doc packages are included automatically,
                         -- but you can add more packages here. Useful for markdown documents.
-                        packages = { 'amsmath', 'amssymb', 'amsfonts', 'amscd', 'mathtools', 'physics' },
+                        packages = { 'amsmath', 'amssymb', 'amsfonts', 'amscd', 'mathtools', 'physics', 'dsfont' },
                         tpl = [[
                             \documentclass[preview,border=0pt,varwidth,12pt]{standalone}
                             \usepackage{${packages}}
+                            \renewcommand{\mathbb}{\mathds}
                             \begin{document}
                             ${header}
-                            { \${font_size} \selectfont
-                              \color[HTML]{${color}}
+                            { \${font_size}\fontfamily{pbk}\selectfont
+                              \color[HTML]{FFFFFF}
                             ${content}}
                             \end{document}]],
                     },

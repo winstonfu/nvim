@@ -393,7 +393,7 @@ require('lazy').setup({
                 { '<leader>t', group = '[T]oggle' },
                 { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
                 { '<leader>l', group = '[L]aTeX', mode = { 'n' } },
-                { '<leader>o', group = '[O]bsidian', mode = { 'n' } },
+                { '<leader>o', group = '[O]verseer / [O]bsidian', mode = { 'n' } },
                 { '<leader>b', group = 'De[b]ug', mode = { 'n' } },
                 { '<leader>x', group = 'Diagnostis (Trouble)', mode = { 'n' } },
                 { '<leader>v', group = 'Diren[v]', mode = { 'n' } },
@@ -1113,6 +1113,7 @@ require('lazy').setup({
                     --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
                 },
                 sources = {
+
                     {
                         name = 'lazydev',
                         -- set group index to 0 to skip loading LuaLS completions as lazydev recommends it
@@ -1404,6 +1405,9 @@ require('lazy').setup({
             -- vim.keymap.set('n', '<leader>wd', function()
             --     MiniSessions.select 'delete'
             -- end, { desc = 'Delete Session' })
+
+            -- Highlight word
+            require('mini.cursorword').setup()
         end,
     },
     { -- Highlight, edit, and navigate code
