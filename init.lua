@@ -33,7 +33,7 @@ vim.opt.showmode = false
 -- end)
 vim.keymap.set({ 'n', 'v' }, '<leader>y', '"+y', { desc = '[Y]ank to OS clipboard' })
 vim.keymap.set({ 'n', 'v' }, '<leader>Y', '"+yg_', { desc = '[Y]ank to OS clipboard to end of line' })
-vim.keymap.set({ 'n', 'v' }, '<leader>p', '"+p', { desc = '[P]aste from OS clipboard' })
+-- vim.keymap.set({ 'n', 'v' }, '<leader>p', '"+p', { desc = '[P]aste from OS clipboard' })
 vim.keymap.set({ 'n', 'v' }, '<leader>P', '"+P', { desc = '[P]aste from OS clipboard before cursor' })
 vim.keymap.set({ 'n' }, 'gp', '`[v`]', { desc = 'Select pasted text' })
 
@@ -172,6 +172,48 @@ vim.keymap.set('x', '<leader>d', function()
     local cmd = string.format("'>-%d,'>d | '<,'<+%dd", k - 1, k - 1)
     vim.cmd(cmd)
 end, { silent = true, desc = 'Delete first and last ' .. vim.v.count1 .. ' line(s) of selection' })
+
+-- Align text below to cursor
+local curs_align = function(format_rows)
+    vim.api.nvim_feedkeys(
+        vim.api.nvim_replace_termcodes('<Esc>', true, false, true), -- translate <Esc>
+        'x', -- 'x' ⇒ execute immediately, do remap              :contentReference[oaicite:1]{index=1}
+        false
+    )
+
+    local _, start_row, start_col, _ = table.unpack(vim.fn.getpos 'v')
+
+    local diff
+    for _, row in ipairs(format_rows) do
+        if row == start_row then
+            goto continue
+        end
+        vim.api.nvim_win_set_cursor(0, { row, 0 })
+        vim.cmd 'norm! _'
+        local _, curr_col = table.unpack(vim.api.nvim_win_get_cursor(0))
+        diff = start_col - curr_col
+        vim.cmd('norm! ' .. diff .. 'I ')
+        ::continue::
+    end
+    vim.api.nvim_win_set_cursor(0, { start_row, start_col })
+end
+
+vim.keymap.set('n', 'gwd', function()
+    local row, _ = table.unpack(vim.api.nvim_win_get_cursor(0))
+    curs_align { row + 1 }
+end, { desc = 'Align next row to start at current cursor position.' })
+
+vim.keymap.set('v', 'gwd', function()
+    local vstart_col, vstart_row = table.unpack(vim.fn.getpos 'v')
+    local vend_col, vend_row = table.unpack(vim.fn.getpos '.')
+    local rows = {}
+    local i = 1
+    for row = vstart_row + 1, vend_row do
+        rows[i] = row
+        i = i + 1
+    end
+    curs_align(rows, { vstart_col, vstart_row })
+end, { desc = 'Align rows in selection to start at current cursor position.' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -1047,6 +1089,7 @@ require('lazy').setup({
             local luasnip = require 'luasnip'
             luasnip.config.setup {
                 enable_autosnippets = true,
+                cut_selection_keys = 'c',
             }
 
             -- Lazy-load snippets, i.e. only load when required, e.g. for a given filetype
@@ -1391,6 +1434,22 @@ require('lazy').setup({
             })
             map_multistep('i', '<CR>', { 'cmp_accept', 'minipairs_cr' })
             map_multistep('i', '<BS>', { 'minipairs_bs' })
+            map_multistep({ 'n', 'x' }, '<leader>p', {
+                {
+                    condition = function()
+                        return true
+                    end,
+                    action = require('img-clip').paste_image,
+                },
+                {
+                    condition = function()
+                        return true
+                    end,
+                    action = function()
+                        return '"+p'
+                    end,
+                },
+            }, { desc = '[P]aste from OS Clipboard (both text and image)' })
 
             -- -- Sessions
             -- require('mini.sessions').setup()
@@ -1408,6 +1467,9 @@ require('lazy').setup({
 
             -- Highlight word
             require('mini.cursorword').setup()
+
+            -- Align text
+            require('mini.align').setup()
         end,
     },
     { -- Highlight, edit, and navigate code

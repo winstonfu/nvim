@@ -74,17 +74,7 @@ return {
         )
     ),
 
-    s(
-        { trig = 'docstr', name = 'Docstring' },
-        fmta(
-            [[
-            '''
-            <>
-            '''
-    ]],
-            { i(1) }
-        )
-    ),
+    s({ trig = 'ds', name = 'Docstring' }, { t [[''']], t { '', '' }, v(1), t { '', '' }, t [[''']] }),
 
     s(
         { trig = 'ifmain', name = 'if name main' },

@@ -185,6 +185,8 @@ return {
                 },
                 doc = {
                     inline = false,
+                    max_width = 30,
+                    max_height = 15,
                 },
                 math = {
                     enabled = true, -- enable math expression rendering

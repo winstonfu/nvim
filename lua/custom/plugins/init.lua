@@ -9,12 +9,13 @@ return {
         -- tag = "v2.15", -- uncomment to pin to a specific release
         init = function()
             -- VimTeX configuration goes here, e.g.
-            vim.g.vimtex_view_method = 'zathura'
+            vim.g.vimtex_view_method = 'zathura_simple'
             vim.g.vimtex_syntax_enabled = 1
         end,
     },
     {
         'stevearc/overseer.nvim',
+        ft = { 'python' },
         config = function()
             require('overseer').setup {
                 task_list = {
@@ -100,7 +101,7 @@ return {
             'nvim-treesitter/nvim-treesitter',
             'nvim-telescope/telescope.nvim',
         },
-        -- ft = { 'markdown', 'tex' },
+        ft = { 'markdown' },
         config = function()
             require('zotcite').setup {
                 -- your options here (see doc/zotcite.txt)
@@ -458,5 +459,22 @@ return {
             hl(0, 'MultiCursorDisabledVisual', { link = 'Visual' })
             hl(0, 'MultiCursorDisabledSign', { link = 'SignColumn' })
         end,
+    },
+    {
+        'HakonHarnes/img-clip.nvim',
+        event = 'VeryLazy',
+        opts = {
+            filetypes = {
+                markdown = {
+                    dir_path = 'Files/Images',
+                    template = '![$FILE_NAME_NO_EXT$CURSOR]($FILE_PATH)',
+                    prompt_for_file_name = false,
+                },
+            },
+        },
+        keys = {
+            -- suggested keymap
+            { '<leader>i', '<cmd>PasteImage<cr>', desc = 'Paste image from system clipboard' },
+        },
     },
 }
