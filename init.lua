@@ -182,7 +182,7 @@ local curs_align = function(format_rows)
     )
 
     local _, start_row, start_col, _ = table.unpack(vim.fn.getpos 'v')
-
+    start_col = start_col - 1
     local diff
     for _, row in ipairs(format_rows) do
         if row == start_row then
@@ -192,16 +192,21 @@ local curs_align = function(format_rows)
         vim.cmd 'norm! _'
         local _, curr_col = table.unpack(vim.api.nvim_win_get_cursor(0))
         diff = start_col - curr_col
+        if diff < 1 then
+            goto continue
+        end
         vim.cmd('norm! ' .. diff .. 'I ')
         ::continue::
     end
     vim.api.nvim_win_set_cursor(0, { start_row, start_col })
 end
 
-vim.keymap.set('n', 'gwd', function()
+local curs_align_below = function()
     local row, _ = table.unpack(vim.api.nvim_win_get_cursor(0))
     curs_align { row + 1 }
-end, { desc = 'Align next row to start at current cursor position.' })
+end
+
+vim.keymap.set('n', 'gwd', curs_align_below, { desc = 'Align next row to start at current cursor position.' })
 
 vim.keymap.set('v', 'gwd', function()
     local vstart_col, vstart_row = table.unpack(vim.fn.getpos 'v')
@@ -214,6 +219,40 @@ vim.keymap.set('v', 'gwd', function()
     end
     curs_align(rows, { vstart_col, vstart_row })
 end, { desc = 'Align rows in selection to start at current cursor position.' })
+
+vim.keymap.set('n', '<leader>fd', function()
+    local col
+    local row
+    local char
+    local line_num_bef
+    local line_num_aft
+    local delta
+
+    for i = 1, 30 do
+        row, col = table.unpack(vim.api.nvim_win_get_cursor(0))
+        char = vim.api.nvim_get_current_line():sub(col + 1, col + 1)
+        if char:match '%w' then
+            line_num_bef = vim.api.nvim_buf_line_count(0)
+            vim.cmd 'norm! gww'
+            line_num_aft = vim.api.nvim_buf_line_count(0)
+            delta = line_num_aft - line_num_bef
+
+            while delta > 0 do
+                curs_align_below()
+                vim.cmd 'norm! j'
+                line_num_bef = vim.api.nvim_buf_line_count(0)
+                vim.cmd 'norm! gww'
+                line_num_aft = vim.api.nvim_buf_line_count(0)
+                delta = delta + line_num_aft - line_num_bef - 1
+            end
+
+            vim.cmd 'norm! j'
+        else
+            goto finish
+        end
+    end
+    ::finish::
+end, { desc = '[F]ormat [D]ocstring' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -943,7 +982,7 @@ require('lazy').setup({
         cmd = { 'ConformInfo' },
         keys = {
             {
-                '<leader>f',
+                '<leader>ff',
                 function()
                     require('conform').format { async = true, lsp_format = 'fallback' }
                 end,
