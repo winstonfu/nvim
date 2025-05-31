@@ -31,10 +31,10 @@ vim.opt.showmode = false
 -- vim.schedule(function()
 --     vim.opt.clipboard = 'unnamedplus'
 -- end)
-vim.keymap.set({ 'n', 'v' }, '<leader>y', '"+y', { desc = '[Y]ank to OS clipboard' })
-vim.keymap.set({ 'n', 'v' }, '<leader>Y', '"+yg_', { desc = '[Y]ank to OS clipboard to end of line' })
--- vim.keymap.set({ 'n', 'v' }, '<leader>p', '"+p', { desc = '[P]aste from OS clipboard' })
-vim.keymap.set({ 'n', 'v' }, '<leader>P', '"+P', { desc = '[P]aste from OS clipboard before cursor' })
+vim.keymap.set({ 'n', 'x' }, '<leader>y', '"+y', { desc = '[Y]ank to OS clipboard' })
+vim.keymap.set({ 'n', 'x' }, '<leader>Y', '"+yg_', { desc = '[Y]ank to OS clipboard to end of line' })
+-- vim.keymap.set({ 'x' }, '<leader>p', '"+p', { desc = '[P]aste from OS clipboard' }) -- n mode mapping is under 'Mini' keymaps
+vim.keymap.set({ 'n', 'x' }, '<leader>P', '"+P', { desc = '[P]aste from OS clipboard before cursor' })
 vim.keymap.set({ 'n' }, 'gp', '`[v`]', { desc = 'Select pasted text' })
 
 -- Enable break indent
@@ -73,7 +73,7 @@ vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
-vim.opt.inccommand = 'nosplit'
+vim.opt.inccommand = 'split'
 
 -- Show which line your cursor is on
 vim.opt.cursorline = true
@@ -206,14 +206,50 @@ local curs_align_below = function()
     curs_align { row + 1 }
 end
 
+local split_line_curs = function(length)
+    local _, curr_row, curr_col, _ = table.unpack(vim.fn.getpos '.')
+    local curr_text = vim.api.nvim_get_current_line()
+    if curr_text:len() > length then
+        local idx = curr_text:find('%s', length)
+        if idx == nil then
+            goto finish
+        end
+        local this_line = curr_text:sub(1, idx):match '^(.-)%s*$'
+        local other_lines = {}
+        local i = 1
+        local delta_length = length - curr_col
+        local end_idx
+        repeat
+            local curr_length = curr_text:find('%s', idx + delta_length)
+            if curr_length == nil then
+                end_idx = -1
+                curr_length = delta_length
+            else
+                end_idx = curr_length - idx
+                curr_length = end_idx
+            end
+            other_lines[i] = string.rep(' ', curr_col - 1) .. curr_text:sub(idx, end_idx):match '^%s*(.-)%s*$'
+            idx = idx + curr_length + 1
+            i = i + 1
+        until idx > curr_text:len() or end_idx == -1
+        vim.api.nvim_set_current_line(this_line)
+        vim.fn.append(curr_row, other_lines)
+    end
+    ::finish::
+end
+
+vim.keymap.set('n', '<leader>fs', function()
+    split_line_curs(80)
+end, { desc = 'Split current line at length of 80 and align at cursor.' })
+
 vim.keymap.set('n', 'gwd', curs_align_below, { desc = 'Align next row to start at current cursor position.' })
 
 vim.keymap.set('v', 'gwd', function()
-    local vstart_col, vstart_row = table.unpack(vim.fn.getpos 'v')
-    local vend_col, vend_row = table.unpack(vim.fn.getpos '.')
+    local _, vstart_row, vstart_col, _ = table.unpack(vim.fn.getpos 'v')
+    local _, vend_row, vend_col, _ = table.unpack(vim.fn.getpos '.')
     local rows = {}
     local i = 1
-    for row = vstart_row + 1, vend_row do
+    for row = vstart_row + 1, vend_row + 1 do
         rows[i] = row
         i = i + 1
     end
@@ -233,20 +269,10 @@ vim.keymap.set('n', '<leader>fd', function()
         char = vim.api.nvim_get_current_line():sub(col + 1, col + 1)
         if char:match '%w' then
             line_num_bef = vim.api.nvim_buf_line_count(0)
-            vim.cmd 'norm! gww'
+            split_line_curs(80)
             line_num_aft = vim.api.nvim_buf_line_count(0)
             delta = line_num_aft - line_num_bef
-
-            while delta > 0 do
-                curs_align_below()
-                vim.cmd 'norm! j'
-                line_num_bef = vim.api.nvim_buf_line_count(0)
-                vim.cmd 'norm! gww'
-                line_num_aft = vim.api.nvim_buf_line_count(0)
-                delta = delta + line_num_aft - line_num_bef - 1
-            end
-
-            vim.cmd 'norm! j'
+            vim.api.nvim_win_set_cursor(0, { row + delta + 1, col })
         else
             goto finish
         end
@@ -698,35 +724,6 @@ require('lazy').setup({
             'hrsh7th/cmp-nvim-lsp',
         },
         config = function()
-            -- Brief aside: **What is LSP?**
-            --
-            -- LSP is an initialism you've probably heard, but might not understand what it is.
-            --
-            -- LSP stands for Language Server Protocol. It's a protocol that helps editors
-            -- and language tooling communicate in a standardized fashion.
-            --
-            -- In general, you have a "server" which is some tool built to understand a particular
-            -- language (such as `gopls`, `lua_ls`, `rust_analyzer`, etc.). These Language Servers
-            -- (sometimes called LSP servers, but that's kind of like ATM Machine) are standalone
-            -- processes that communicate with some "client" - in this case, Neovim!
-            --
-            -- LSP provides Neovim with features like:
-            --  - Go to definition
-            --  - Find references
-            --  - Autocompletion
-            --  - Symbol Search
-            --  - and more!
-            --
-            -- Thus, Language Servers are external tools that must be installed separately from
-            -- Neovim. This is where `mason` and related plugins come into play.
-            --
-            -- If you're wondering about lsp vs treesitter, you can check out the wonderfully
-            -- and elegantly composed help section, `:help lsp-vs-treesitter`
-
-            --  This function gets run when an LSP attaches to a particular buffer.
-            --    That is to say, every time a new file is opened that is associated with
-            --    an lsp (for example, opening `main.rs` is associated with `rust_analyzer`) this
-            --    function will be executed to configure the current buffer
             vim.api.nvim_create_autocmd('LspAttach', {
                 group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
                 callback = function(event)
@@ -1163,7 +1160,7 @@ require('lazy').setup({
 
                     -- If you prefer more traditional completion keymaps,
                     -- you can uncomment the following lines
-                    ['<CR>'] = cmp.mapping.confirm { select = true },
+                    -- ['<CR>'] = cmp.mapping.confirm { select = true },
                     --['<Tab>'] = cmp.mapping.select_next_item(),
                     --['<S-Tab>'] = cmp.mapping.select_prev_item(),
 
@@ -1471,14 +1468,14 @@ require('lazy').setup({
                 },
                 'decrease_indent',
             })
-            map_multistep('i', '<CR>', { 'cmp_accept', 'minipairs_cr' })
+            -- map_multistep('i', '<CR>', { 'cmp_accept', 'minipairs_cr' })
             map_multistep('i', '<BS>', { 'minipairs_bs' })
             map_multistep({ 'n', 'x' }, '<leader>p', {
                 {
-                    condition = function()
-                        return true
+                    condition = require('img-clip.clipboard').content_is_image,
+                    action = function()
+                        vim.schedule(require('img-clip').paste_image)
                     end,
-                    action = require('img-clip').paste_image,
                 },
                 {
                     condition = function()

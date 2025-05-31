@@ -2,6 +2,8 @@ local set_text = function()
     vim.opt_local.linebreak = true
     vim.opt_local.spell = true
     vim.opt_local.conceallevel = 1
+    vim.opt_local.fo:append 'a'
+    vim.opt_local.textwidth = 80
 end
 
 return {

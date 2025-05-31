@@ -1,7 +1,7 @@
 local set_text = function()
     vim.opt_local.linebreak = true
     vim.opt_local.spell = true
-    vim.opt_local.conceallevel = 1
+    -- vim.opt_local.conceallevel = 1
 end
 return {
     set_text(),

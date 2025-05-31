@@ -220,6 +220,7 @@ return {
                     },
                 },
             },
+            words = { enabled = true },
             styles = {
                 terminal = {
                     bo = {
@@ -301,13 +302,19 @@ return {
         'folke/persistence.nvim',
         event = 'BufReadPre', -- this will only start session saving when an actual file was opened
         config = function()
-            require('persistence').setup { options = { 'buffers', 'curdir', 'tabpages', 'winsize' } }
-            vim.api.nvim_create_autocmd('User', {
-                pattern = 'PersistenceSavePre',
-                callback = function()
-                    vim.cmd 'OverseerClose'
-                end,
-            })
+            require('persistence').setup {}
+            vim.opt.sessionoptions = 'buffers,curdir,tabpages,winsize'
+            -- vim.api.nvim_create_autocmd('User', {
+            --     pattern = 'PersistenceSavePre',
+            -- callback = function()
+            --     vim.cmd 'OverseerClose'
+            --     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            --         if vim.api.nvim_buf_get_name(buf) == '' or vim.api.nvim_get_option_value('buftype', { buf = buf }) == 'terminal' then
+            --             pcall(vim.api.nvim_buf_delete, buf, { force = true })
+            --         end
+            --     end
+            -- end,
+            -- })
         end,
     },
 }

@@ -1,4 +1,8 @@
+local loc_options = function()
+    -- vim.opt_local.equalprg = 'pycodestyle -'
+end
 return {
+    loc_options(),
     vim.keymap.set('n', '<leader>e', function()
         vim.cmd 'w'
         vim.cmd('OverseerRunCmd python3 "' .. vim.fn.expand '%:p' .. '"')

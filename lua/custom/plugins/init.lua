@@ -235,14 +235,21 @@ return {
             -- or if using `mini.icons`
             -- { "echasnovski/mini.icons" },
         },
-        opts = {
-            show_icons = true,
-            leader_key = '\\', -- Recommended to be a single key
-            buffer_leader_key = 'm', -- Per Buffer Mappings
-            per_buffer_config = {
-                -- treesitter_context = { line_shift_down = 2 },
-            },
-        },
+        config = function()
+            require('arrow').setup {
+                show_icons = true,
+                leader_key = '\\', -- Recommended to be a single key
+                buffer_leader_key = 'm', -- Per Buffer Mappings
+                per_buffer_config = {
+                    -- treesitter_context = { line_shift_down = 2 },
+                },
+            }
+
+            vim.keymap.set('n', 'm', function()
+                require('arrow.buffer_ui').openMenu()
+                vim.opt_local.winbar = '%{%v:lua.dropbar()%}'
+            end, { desc = 'Arrow Buffer Bookmarks' })
+        end,
     },
     -- {
     --     'tadaa/vimade',
@@ -368,9 +375,6 @@ return {
         config = function()
             require('kitty-scrollback').setup()
         end,
-    },
-    {
-        'subnut/nvim-ghost.nvim',
     },
     {
         'jake-stewart/multicursor.nvim',
